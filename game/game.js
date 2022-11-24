@@ -7602,7 +7602,6 @@
 							if(lib.config.suits_font) ui.css.fontsheet.sheet.insertRule(`@font-face {font-family: '${i}'; src: url('${lib.assetURL}font/suits.woff2') format('woff2');}`,0);
 						}
 						if(lib.config.suits_font) ui.css.fontsheet.sheet.insertRule("@font-face {font-family: 'Suits'; src: url('"+lib.assetURL+"font/suits.woff2') format('woff2');}",0);
-						}
 						lib.configMenu.appearence.config.cardtext_font.item.default='默认';
 						lib.configMenu.appearence.config.global_font.item.default='默认';
 					}
