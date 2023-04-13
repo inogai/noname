@@ -2045,7 +2045,8 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 									num3=num2;
 								}
 							}
-							var str='选择角色';
+							num3=10;
+							var str='选择角色251';
 							if(game.players[i].special_identity){
 								str+='（'+get.translation(game.players[i].special_identity)+'）';
 							}
