@@ -13141,20 +13141,20 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 						ui.arena.classList.add('choose-character');
 					});
 					var list=[];
-					//if(lib.configOL.onlyguozhan){
-						//list=[];
+					if(false){
+						list=[];
 						for(var i in lib.characterPack.mode_guozhan){
 							if(i.indexOf('gz_shibing')==0) continue;
 							if(get.is.jun(i)) continue;
 							if(lib.config.guozhan_banned&&lib.config.guozhan_banned.contains(i)) continue;
 							list.push(i);
 						}
-					//}
-					//else{
-					//	list=get.charactersOL(function(i){
-					//		return lib.character[i][4].contains('hiddenSkill');
-					//	});
-					//}
+					}
+					else{
+						list=get.charactersOL(function(i){
+							return lib.character[i][4].contains('hiddenSkill');
+						});
+					}
 					_status.characterlist=list.slice(0);
 					_status.yeidentity=[];
 					event.list=list.slice(0);
