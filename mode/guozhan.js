@@ -13202,7 +13202,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					};
 					list.randomSort();
 					for(var i=0;i<game.players.length;i++){
-						list2.push([game.players[i],['选择角色',[game.getCharacterChoice(list,num),'character']],2,
+						list2.push([game.players[i],['选择角色259',[game.getCharacterChoice(list,16),'character']],2,
 						true,function(){return Math.random()},filterButton]);
 					}
 					game.me.chooseButtonOL(list2,function(player,result){
