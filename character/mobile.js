@@ -10662,7 +10662,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				preHidden:true,
 				filter:function(event,player){
 					if(get.type(event.card)!='equip') return false;
-					var gz=get.mode()=='guozhan';
+					// var gz=get.mode()=='guozhan';
+					var gz = false;
 					if(gz&&event.player.isFriendOf(player)) return false;
 					return player.countMark('spwuku')<(gz?2:3);
 				},
@@ -18264,7 +18265,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			sp_duyu:'手杀杜预',
 			spwuku:'武库',
 			spwuku_info:'锁定技，当有角色使用装备牌时，若你的“武库”数小于3，则你获得一个“武库”。',
-			spwuku_info_guozhan:'锁定技，当有其他势力的角色使用装备牌时，若你的“武库”数小于2，则你获得一个“武库”。',
+			// spwuku_info_guozhan:'锁定技，当有其他势力的角色使用装备牌时，若你的“武库”数小于2，则你获得一个“武库”。',
 			spsanchen:'三陈',
 			spsanchen_info:'觉醒技，结束阶段，若你的“武库”数大于2，则你加1点体力上限并回复1点体力，然后获得〖灭吴〗。',
 			spmiewu:'灭吴',
