@@ -12816,44 +12816,43 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 				next.showConfig=true;
 				next.addPlayer=true;
 				next.ai=function(player,list,back){
-					if(_status.brawl&&_status.brawl.chooseCharacterAi){
-						if(_status.brawl.chooseCharacterAi(player,list,back)!==false){
-							return;
+					var mainx=list[0];
+					var vicex=list[1];
+					if(get.guozhanReverse(mainx,vicex)){
+						mainx=list[1];
+						vicex=list[0];
+					}
+					player.init(mainx,vicex,false);
+					if(back){
+						list.remove(player.name1);
+						list.remove(player.name2);
+						for(var i=0;i<list.length;i++){
+							back.push(list[i]);
 						}
 					}
-					var filterChoice=function(name1,name2){
-						if(get.is.double(name1)) return false;
-						var group1=lib.character[name1][1];
-						var group2=lib.character[name2][1];
-						if(group1=='ye') return group2!='ye';
-						var double=get.is.double(name2,true);
-						if(double) return double.contains(group1);
-						return group1==group2;
-					};
-					for(var i=0;i<list.length-1;i++){
-						for(var j=i+1;j<list.length;j++){
-							if(filterChoice(list[i],list[j])||filterChoice(list[j],list[i])){
-								var mainx=list[i];
-								var vicex=list[j];
-								if(!filterChoice(mainx,vicex)||(filterChoice(vicex,mainx)&&get.guozhanReverse(mainx,vicex))){
-									mainx=list[j];
-									vicex=list[i];
-								}
-								player.init(mainx,vicex,false);
-								if(back){
-									list.remove(player.name1);
-									list.remove(player.name2);
-									for(var i=0;i<list.length;i++){
-										back.push(list[i]);
-									}
-								}
-								return;
-							}
-						}
-					}
+					return;
 				}
 				next.setContent(function(){
 					"step 0"
+					var eltp={
+						getGuozhanGroup:function(num){
+							// if(num==1) return lib.character[this.name2][1];
+							return lib.character[this.name1][1];
+						},
+//						wontYe:function(group){
+//							if(!group) group=lib.character[this.name1][1];
+//							if(_status.yeidentity&&_status.yeidentity.contains(group)) return false;
+//							if(get.zhu(this,null,true)) return true;
+//							var num=3,total=get.population();
+//							if(total<6) num=1;
+//							else if(total<8) num=2;
+//							return get.totalPopulation(group)+1<=num;
+//						},
+					}
+					for(var i of game.players){
+						for(var j in eltp) i[j]=eltp[j];
+					}
+					for(var j in eltp) lib.element.player[j]=eltp[j];
 					ui.arena.classList.add('choose-character');
 					var addSetting=function(dialog){
 						dialog.add('选择座位').classList.add('add-setting');
@@ -12886,7 +12885,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 							seats.previousSibling.style.display='none';
 							seats.style.display='none';
 						}
-
+	
 						dialog.add(ui.create.div('.placeholder.add-setting'));
 						dialog.add(ui.create.div('.placeholder.add-setting'));
 						if(get.is.phoneLayout()) dialog.add(ui.create.div('.placeholder.add-setting'));
@@ -12905,11 +12904,11 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					};
 					event.addSetting=addSetting;
 					event.removeSetting=removeSetting;
-
+	
 					var chosen=lib.config.continue_name||[];
 					game.saveConfig('continue_name');
 					event.chosen=chosen;
-
+	
 					var i;
 					event.list=[];
 					for(i in lib.character){
@@ -12926,18 +12925,9 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					}
 					_status.characterlist=event.list.slice(0);
 					_status.yeidentity=[];
-					if(_status.brawl&&_status.brawl.chooseCharacterFilter){
-						event.list=_status.brawl.chooseCharacterFilter(event.list);
-					}
 					event.list.randomSort();
 					// var list=event.list.splice(0,parseInt(get.config('choice_num')));
-					var list;
-					if(_status.brawl&&_status.brawl.chooseCharacter){
-						list=_status.brawl.chooseCharacter(event.list,game.me);
-					}
-					else{
-						list=game.getCharacterChoice(event.list,parseInt(get.config('choice_num')));
-					}
+					var list=event.list.randomRemove(parseInt(get.config('choice_num')));
 					if(_status.auto){
 						event.ai(game.me,list);
 						lib.init.onfree();
@@ -12948,10 +12938,8 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					}
 					else{
 						var dialog=ui.create.dialog('选择角色','hidden',[list,'character']);
-						if(!_status.brawl||!_status.brawl.noAddSetting){
-							if(get.config('change_identity')){
-								addSetting(dialog);
-							}
+						if(get.config('change_identity')){
+							addSetting(dialog);
 						}
 						var next=game.me.chooseButton(dialog,true,2).set('onfree',true);
 						next.filterButton=function(button){
@@ -12959,31 +12947,14 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 								for(var i=0;i<ui.dialog.buttons.length;i++){
 									if(ui.dialog.buttons[i]!=button){
 										if(lib.element.player.perfectPair.call({
-											name1:button.link,
-											name2:ui.dialog.buttons[i].link,
-										},true)){
+											name1:button.link,name2:ui.dialog.buttons[i].link
+										})){
 											button.classList.add('glow2');
 										}
 									}
 								}
 							}
-							if(lib.character[button.link][4].contains('hiddenSkill')) return false;
-							if(ui.selected.buttons.length==0){
-								if(get.is.double(button.link)) return false;
-								if(lib.character[button.link][1]=='ye') return true;
-								for(var i=0;i<ui.dialog.buttons.length;i++){
-									var double=get.is.double(ui.dialog.buttons[i].link,true);
-									if(ui.dialog.buttons[i]!=button&&(lib.character[button.link][1]==lib.character[ui.dialog.buttons[i].link][1]||double&&double.contains(lib.character[button.link][1]))){
-										return true;
-									}
-								}
-								return false;
-							};
-							if(!lib.character[button.link]||lib.character[button.link][1]=='ye') return false;
-							if(get.is.double(ui.selected.buttons[0].link)) return false;
-							if(lib.character[ui.selected.buttons[0].link][1]=='ye') return true;
-							if(get.is.double(button.link)) return get.is.double(button.link,true).contains(lib.character[ui.selected.buttons[0].link][1]);
-							return (lib.character[button.link][1]==lib.character[ui.selected.buttons[0].link][1]);
+							return true;
 						};
 						next.switchToAuto=function(){
 							event.ai(game.me,list);
@@ -13057,7 +13028,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 								event.list=event.list.concat(list);
 								event.list.randomSort();
 								// list=event.list.splice(0,parseInt(get.config('choice_num')));
-								list=game.getCharacterChoice(event.list,parseInt(get.config('choice_num')));
+								list=event.list.randomRemove(parseInt(get.config('choice_num')));
 								var buttons=ui.create.div('.buttons');
 								var node=_status.event.dialog.buttons[0].parentNode;
 								_status.event.dialog.buttons=ui.create.buttons(list,'character',buttons);
@@ -13069,12 +13040,10 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 							});
 							delete _status.createControl;
 						}
-						if(!_status.brawl||!_status.brawl.chooseCharacterFixed){
-							if(!ui.cheat&&get.config('change_choice'))
-							ui.create.cheat();
-							if(!ui.cheat2&&get.config('free_choose'))
-							ui.create.cheat2();
-						}
+						if(!ui.cheat&&get.config('change_choice'))
+						ui.create.cheat();
+						if(!ui.cheat2&&get.config('free_choose'))
+						ui.create.cheat2();
 					}
 					"step 1"
 					if(ui.cheat){
@@ -13094,7 +13063,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					event.list.remove(game.me.name2);
 					for(var i=0;i<game.players.length;i++){
 						if(game.players[i]!=game.me){
-							event.ai(game.players[i],game.getCharacterChoice(event.list,parseInt(get.config('choice_num'))),event.list);
+							event.ai(game.players[i],event.list.randomRemove(parseInt(get.config('choice_num'))),event.list);
 						}
 					}
 					for(var i=0;i<game.players.length;i++){
@@ -13124,6 +13093,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 						game.players[i].identity='unknown';
 						game.players[i].node.name.show();
 						game.players[i].node.name2.show();
+						game.players[i]._group=lib.character[game.players[i].name1][1];
 						for(var j=0;j<game.players[i].hiddenSkills.length;j++){
 							game.players[i].addSkillTrigger(game.players[i].hiddenSkills[j],true);
 						}
@@ -13133,10 +13103,350 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					},500);
 				});
 			},
+			// 	var next=game.createEvent('chooseCharacter',false);
+			// 	next.showConfig=true;
+			// 	next.addPlayer=true;
+			// 	next.ai=function(player,list,back){
+			// 		if(_status.brawl&&_status.brawl.chooseCharacterAi){
+			// 			if(_status.brawl.chooseCharacterAi(player,list,back)!==false){
+			// 				return;
+			// 			}
+			// 		}
+			// 		var filterChoice=function(name1,name2){
+			// 			if(get.is.double(name1)) return false;
+			// 			var group1=lib.character[name1][1];
+			// 			var group2=lib.character[name2][1];
+			// 			if(group1=='ye') return group2!='ye';
+			// 			var double=get.is.double(name2,true);
+			// 			if(double) return double.contains(group1);
+			// 			return group1==group2;
+			// 		};
+			// 		for(var i=0;i<list.length-1;i++){
+			// 			for(var j=i+1;j<list.length;j++){
+			// 				if(filterChoice(list[i],list[j])||filterChoice(list[j],list[i])){
+			// 					var mainx=list[i];
+			// 					var vicex=list[j];
+			// 					if(!filterChoice(mainx,vicex)||(filterChoice(vicex,mainx)&&get.guozhanReverse(mainx,vicex))){
+			// 						mainx=list[j];
+			// 						vicex=list[i];
+			// 					}
+			// 					player.init(mainx,vicex,false);
+			// 					if(back){
+			// 						list.remove(player.name1);
+			// 						list.remove(player.name2);
+			// 						for(var i=0;i<list.length;i++){
+			// 							back.push(list[i]);
+			// 						}
+			// 					}
+			// 					return;
+			// 				}
+			// 			}
+			// 		}
+			// 	}
+			// 	next.setContent(function(){
+			// 		"step 0"
+			// 		ui.arena.classList.add('choose-character');
+			// 		var addSetting=function(dialog){
+			// 			dialog.add('选择座位').classList.add('add-setting');
+			// 			var seats=document.createElement('table');
+			// 			seats.classList.add('add-setting');
+			// 			seats.style.margin='0';
+			// 			seats.style.width='100%';
+			// 			seats.style.position='relative';
+			// 			for(var i=1;i<=game.players.length;i++){
+			// 				var td=ui.create.div('.shadowed.reduce_radius.pointerdiv.tdnode');
+			// 				td.innerHTML='<span>'+get.cnNumber(i,true)+'</span>';
+			// 				td.link=i-1;
+			// 				seats.appendChild(td);
+			// 				td.addEventListener(lib.config.touchscreen?'touchend':'click',function(){
+			// 					if(_status.dragged) return;
+			// 					if(_status.justdragged) return;
+			// 					if(_status.cheat_seat){
+			// 						_status.cheat_seat.classList.remove('bluebg');
+			// 						if(_status.cheat_seat==this){
+			// 							delete _status.cheat_seat;
+			// 							return;
+			// 						}
+			// 					}
+			// 					this.classList.add('bluebg');
+			// 					_status.cheat_seat=this;
+			// 				});
+			// 			}
+			// 			dialog.content.appendChild(seats);
+			// 			if(game.me==game.zhu){
+			// 				seats.previousSibling.style.display='none';
+			// 				seats.style.display='none';
+			// 			}
+
+			// 			dialog.add(ui.create.div('.placeholder.add-setting'));
+			// 			dialog.add(ui.create.div('.placeholder.add-setting'));
+			// 			if(get.is.phoneLayout()) dialog.add(ui.create.div('.placeholder.add-setting'));
+			// 		};
+			// 		var removeSetting=function(){
+			// 			var dialog=_status.event.dialog;
+			// 			if(dialog){
+			// 				dialog.style.height='';
+			// 				delete dialog._scrollset;
+			// 				var list=Array.from(dialog.querySelectorAll('.add-setting'));
+			// 				while(list.length){
+			// 					list.shift().remove();
+			// 				}
+			// 				ui.update();
+			// 			}
+			// 		};
+			// 		event.addSetting=addSetting;
+			// 		event.removeSetting=removeSetting;
+
+			// 		var chosen=lib.config.continue_name||[];
+			// 		game.saveConfig('continue_name');
+			// 		event.chosen=chosen;
+
+			// 		var i;
+			// 		event.list=[];
+			// 		for(i in lib.character){
+			// 			if(i.indexOf('gz_shibing')==0) continue;
+			// 			if(chosen.contains(i)) continue;
+			// 			if(lib.filter.characterDisabled(i)) continue;
+			// 			if(get.config('onlyguozhan')){
+			// 				if(!lib.characterPack.mode_guozhan[i]) continue;
+			// 				if(get.is.jun(i)) continue;
+			// 			}
+			// 			if(lib.character[i][4].contains('hiddenSkill')) continue;
+			// 			if(lib.character[i][2]==3||lib.character[i][2]==4||lib.character[i][2]==5)
+			// 			event.list.push(i);
+			// 		}
+			// 		_status.characterlist=event.list.slice(0);
+			// 		_status.yeidentity=[];
+			// 		if(_status.brawl&&_status.brawl.chooseCharacterFilter){
+			// 			event.list=_status.brawl.chooseCharacterFilter(event.list);
+			// 		}
+			// 		event.list.randomSort();
+			// 		// var list=event.list.splice(0,parseInt(get.config('choice_num')));
+			// 		var list;
+			// 		if(_status.brawl&&_status.brawl.chooseCharacter){
+			// 			list=_status.brawl.chooseCharacter(event.list,game.me);
+			// 		}
+			// 		else{
+			// 			list=game.getCharacterChoice(event.list,parseInt(get.config('choice_num')));
+			// 		}
+			// 		if(_status.auto){
+			// 			event.ai(game.me,list);
+			// 			lib.init.onfree();
+			// 		}
+			// 		else if(chosen.length){
+			// 			game.me.init(chosen[0],chosen[1],false);
+			// 			lib.init.onfree();
+			// 		}
+			// 		else{
+			// 			var dialog=ui.create.dialog('选择角色','hidden',[list,'character']);
+			// 			if(!_status.brawl||!_status.brawl.noAddSetting){
+			// 				if(get.config('change_identity')){
+			// 					addSetting(dialog);
+			// 				}
+			// 			}
+			// 			var next=game.me.chooseButton(dialog,true,2).set('onfree',true);
+			// 			next.filterButton=function(button){
+			// 				if(ui.dialog.buttons.length<=10){
+			// 					for(var i=0;i<ui.dialog.buttons.length;i++){
+			// 						if(ui.dialog.buttons[i]!=button){
+			// 							if(lib.element.player.perfectPair.call({
+			// 								name1:button.link,
+			// 								name2:ui.dialog.buttons[i].link,
+			// 							},true)){
+			// 								button.classList.add('glow2');
+			// 							}
+			// 						}
+			// 					}
+			// 				}
+			// 				if(lib.character[button.link][4].contains('hiddenSkill')) return false;
+			// 				if(ui.selected.buttons.length==0){
+			// 					if(get.is.double(button.link)) return false;
+			// 					if(lib.character[button.link][1]=='ye') return true;
+			// 					for(var i=0;i<ui.dialog.buttons.length;i++){
+			// 						var double=get.is.double(ui.dialog.buttons[i].link,true);
+			// 						if(ui.dialog.buttons[i]!=button&&(lib.character[button.link][1]==lib.character[ui.dialog.buttons[i].link][1]||double&&double.contains(lib.character[button.link][1]))){
+			// 							return true;
+			// 						}
+			// 					}
+			// 					return false;
+			// 				};
+			// 				if(!lib.character[button.link]||lib.character[button.link][1]=='ye') return false;
+			// 				if(get.is.double(ui.selected.buttons[0].link)) return false;
+			// 				if(lib.character[ui.selected.buttons[0].link][1]=='ye') return true;
+			// 				if(get.is.double(button.link)) return get.is.double(button.link,true).contains(lib.character[ui.selected.buttons[0].link][1]);
+			// 				return (lib.character[button.link][1]==lib.character[ui.selected.buttons[0].link][1]);
+			// 			};
+			// 			next.switchToAuto=function(){
+			// 				event.ai(game.me,list);
+			// 				ui.arena.classList.remove('selecting');
+			// 			};
+			// 			var createCharacterDialog=function(){
+			// 				event.dialogxx=ui.create.characterDialog('heightset',function(i){
+			// 					if(i.indexOf('gz_shibing')==0) return true;
+			// 					if(get.config('onlyguozhan')){
+			// 						if(!lib.characterPack.mode_guozhan[i]) return true;
+			// 						if(get.is.jun(i)) return true;
+			// 					}
+			// 				},get.config('onlyguozhanexpand')?'expandall':undefined,get.config('onlyguozhan')?'onlypack:mode_guozhan':undefined);
+			// 				if(ui.cheat2){
+			// 					ui.cheat2.animate('controlpressdownx',500);
+			// 					ui.cheat2.classList.remove('disabled');
+			// 				}
+			// 			};
+			// 			if(lib.onfree){
+			// 				lib.onfree.push(createCharacterDialog);
+			// 			}
+			// 			else{
+			// 				createCharacterDialog();
+			// 			}
+			// 			ui.create.cheat2=function(){
+			// 				ui.cheat2=ui.create.control('自由选将',function(){
+			// 					if(this.dialog==_status.event.dialog){
+			// 						if(game.changeCoin){
+			// 							game.changeCoin(50);
+			// 						}
+			// 						this.dialog.close();
+			// 						_status.event.dialog=this.backup;
+			// 						this.backup.open();
+			// 						delete this.backup;
+			// 						game.uncheck();
+			// 						game.check();
+			// 						if(ui.cheat){
+			// 							ui.cheat.animate('controlpressdownx',500);
+			// 							ui.cheat.classList.remove('disabled');
+			// 						}
+			// 					}
+			// 					else{
+			// 						if(game.changeCoin){
+			// 							game.changeCoin(-10);
+			// 						}
+			// 						this.backup=_status.event.dialog;
+			// 						_status.event.dialog.close();
+			// 						_status.event.dialog=_status.event.parent.dialogxx;
+			// 						this.dialog=_status.event.dialog;
+			// 						this.dialog.open();
+			// 						game.uncheck();
+			// 						game.check();
+			// 						if(ui.cheat){
+			// 							ui.cheat.classList.add('disabled');
+			// 						}
+			// 					}
+			// 				});
+			// 				if(lib.onfree){
+			// 					ui.cheat2.classList.add('disabled');
+			// 				}
+			// 			}
+			// 			ui.create.cheat=function(){
+			// 				_status.createControl=ui.cheat2;
+			// 				ui.cheat=ui.create.control('更换',function(){
+			// 					if(ui.cheat2&&ui.cheat2.dialog==_status.event.dialog){
+			// 						return;
+			// 					}
+			// 					if(game.changeCoin){
+			// 						game.changeCoin(-3);
+			// 					}
+			// 					event.list=event.list.concat(list);
+			// 					event.list.randomSort();
+			// 					// list=event.list.splice(0,parseInt(get.config('choice_num')));
+			// 					list=game.getCharacterChoice(event.list,parseInt(get.config('choice_num')));
+			// 					var buttons=ui.create.div('.buttons');
+			// 					var node=_status.event.dialog.buttons[0].parentNode;
+			// 					_status.event.dialog.buttons=ui.create.buttons(list,'character',buttons);
+			// 					_status.event.dialog.content.insertBefore(buttons,node);
+			// 					buttons.animate('start');
+			// 					node.remove();
+			// 					game.uncheck();
+			// 					game.check();
+			// 				});
+			// 				delete _status.createControl;
+			// 			}
+			// 			if(!_status.brawl||!_status.brawl.chooseCharacterFixed){
+			// 				if(!ui.cheat&&get.config('change_choice'))
+			// 				ui.create.cheat();
+			// 				if(!ui.cheat2&&get.config('free_choose'))
+			// 				ui.create.cheat2();
+			// 			}
+			// 		}
+			// 		"step 1"
+			// 		if(ui.cheat){
+			// 			ui.cheat.close();
+			// 			delete ui.cheat;
+			// 		}
+			// 		if(ui.cheat2){
+			// 			ui.cheat2.close();
+			// 			delete ui.cheat2;
+			// 		}
+			// 		if(result.buttons){
+			// 			game.me.init(result.buttons[0].link,result.buttons[1].link,false);
+			// 			game.addRecentCharacter(result.buttons[0].link,result.buttons[1].link);
+			// 		}
+			// 		// game.me.setIdentity(game.me.group);
+			// 		event.list.remove(game.me.name1);
+			// 		event.list.remove(game.me.name2);
+			// 		for(var i=0;i<game.players.length;i++){
+			// 			if(game.players[i]!=game.me){
+			// 				event.ai(game.players[i],game.getCharacterChoice(event.list,parseInt(get.config('choice_num'))),event.list);
+			// 			}
+			// 		}
+			// 		for(var i=0;i<game.players.length;i++){
+			// 			game.players[i].classList.add('unseen');
+			// 			game.players[i].classList.add('unseen2');
+			// 			_status.characterlist.remove(game.players[i].name);
+			// 			_status.characterlist.remove(game.players[i].name2);
+			// 			if(game.players[i]!=game.me){
+			// 				game.players[i].node.identity.firstChild.innerHTML='猜';
+			// 				game.players[i].node.identity.dataset.color='unknown';
+			// 				game.players[i].node.identity.classList.add('guessing');
+			// 			}
+			// 			game.players[i].hiddenSkills=lib.character[game.players[i].name1][3].slice(0);
+			// 			var hiddenSkills2=lib.character[game.players[i].name2][3];
+			// 			for(var j=0;j<hiddenSkills2.length;j++){
+			// 				game.players[i].hiddenSkills.add(hiddenSkills2[j]);
+			// 			}
+			// 			for(var j=0;j<game.players[i].hiddenSkills.length;j++){
+			// 				if(!lib.skill[game.players[i].hiddenSkills[j]]){
+			// 					game.players[i].hiddenSkills.splice(j--,1);
+			// 				}
+			// 			}
+			// 			game.players[i].group='unknown';
+			// 			game.players[i].sex='unknown';
+			// 			game.players[i].name1=game.players[i].name;
+			// 			game.players[i].name='unknown';
+			// 			game.players[i].identity='unknown';
+			// 			game.players[i].node.name.show();
+			// 			game.players[i].node.name2.show();
+			// 			for(var j=0;j<game.players[i].hiddenSkills.length;j++){
+			// 				game.players[i].addSkillTrigger(game.players[i].hiddenSkills[j],true);
+			// 			}
+			// 		}
+			// 		setTimeout(function(){
+			// 			ui.arena.classList.remove('choose-character');
+			// 		},500);
+			// 	});
+			// },
 			chooseCharacterOL:function(){
 				var next=game.createEvent('chooseCharacter',false);
 				next.setContent(function(){
 					'step 0'
+					var eltp={
+						getGuozhanGroup:function(num){
+							// if(num==1) return lib.character[this.name2][1];
+							return lib.character[this.name1][1];
+						},
+//						wontYe:function(group){
+//							if(!group) group=lib.character[this.name1][1];
+//							if(_status.yeidentity&&_status.yeidentity.contains(group)) return false;
+//							if(get.zhu(this,null,true)) return true;
+//							var num=3,total=get.population();
+//							if(total<6) num=1;
+//							else if(total<8) num=2;
+//							return get.totalPopulation(group)+1<=num;
+//						},
+					}
+					for(var i of game.players){
+						for(var j in eltp) i[j]=eltp[j];
+					}
+					for(var j in eltp) lib.element.player[j]=eltp[j];
 					game.broadcastAll(function(){
 						ui.arena.classList.add('choose-character');
 					});
@@ -13195,6 +13505,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 							return false;
 						};
 						if(!lib.character[button.link]||lib.character[button.link][1]=='ye') return false;
+						return true;
 						if(lib.character[ui.selected.buttons[0].link][1]=='ye') return true;
 						if(get.is.double(ui.selected.buttons[0].link)) return false;
 						if(get.is.double(button.link)) return get.is.double(button.link,true).contains(lib.character[ui.selected.buttons[0].link][1]);
@@ -13219,6 +13530,10 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 							var double=get.is.double(name2,true);
 							if(double) return double.contains(group1);
 							return group1==group2;
+						};
+						filterChoice=function(name1,name2){
+							if(get.is.double(name1)) return false;
+							return true;
 						};
 						for(var i=0;i<buttons.length-1;i++){
 							for(var j=i+1;j<buttons.length;j++){
@@ -13256,7 +13571,8 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 							result[i]=[event.list.shift()];
 							var group=lib.character[result[i][0]][1];
 							for(var j=0;j<event.list.length;j++){
-								if(lib.character[event.list[j]][1]==group){
+								if(lib.character[event.list[j]][1]==group || game.群雄格局){
+								// if(lib.character[event.list[j]][1]==group){
 									result[i].push(event.list[j]);
 									event.list.splice(j--,1);
 									break;
