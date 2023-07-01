@@ -13521,6 +13521,8 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					}).set('switchToAuto',function(){
 						_status.event.result='ai';
 					}).set('processAI',function(){
+						let groupList=['wei','shu','wu','qun'];
+						let decidedGroup=groupList.randomGet();
 						var buttons=_status.event.dialog.buttons;
 						var filterChoice=function(name1,name2){
 							if(get.is.double(name1)) return false;
@@ -13533,6 +13535,8 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 						};
 						filterChoice=function(name1,name2){
 							if(get.is.double(name1)) return false;
+							var group1=lib.character[name1][1];
+							if(groupList.contains(group1)&&group1!=decidedGroup) return false;
 							return true;
 						};
 						for(var i=0;i<buttons.length-1;i++){
