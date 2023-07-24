@@ -39,6 +39,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 				node.contentEditable=true;
 				node.style.webkitUserSelect='text';
 				node.style.textAlign='center';
+				node.style.overflow='hidden';
 
 				// paste as plain text
 				node.addEventListener('paste', function (e) {
