@@ -150,7 +150,7 @@
 					}
 					else{
 						cfg.nickname=util.getNickname(cfg.nickname);
-						cfg.avatar=cfg.avatar||'caocao';
+						cfg.avatar=cfg.nickname||'caocao';
 						cfg.creator=id;
 						cfg.id=util.getid();
 						cfg.members=[id];
