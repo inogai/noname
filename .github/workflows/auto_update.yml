@@ -42,7 +42,7 @@ jobs:
       - uses: actions/setup-node@v3
         if: success() && steps.check_update.outputs.available == 'true'
         with:
-          cache: "yarn"
+          cache: 'yarn'
 
       - name: Generate new `sw.js` and version badge
         if: success() && steps.check_update.outputs.available == 'true'
@@ -56,7 +56,9 @@ jobs:
           badge_img='![badge:version]'"(${badge_url})"
           sed -i "s/\!\[badge:version\]\(.*\)/${badge_img}/" README.md
           git add .
-          git commit -m "Upgrade to ${version}" -m "${change_log}"
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Upgrade to ${version}" -m "${change_log}"
+          fi
 
       - name: Push to origin
         if: success() && steps.check_update.outputs.available == 'true'
