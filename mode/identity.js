@@ -523,13 +523,13 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					var loser=[];
 					var ye=game.filterPlayer(function(current){
 						return ['rYe','bYe'].contains(current.identity);
-					});
+					},null,true);
 					var red=game.filterPlayer(function(current){
 						return ['rZhu','rZhong','bNei'].contains(current.identity);
-					});
+					},null,true);
 					var blue=game.filterPlayer(function(current){
 						return ['bZhu','bZhong','rNei'].contains(current.identity);
-					})
+					},null,true)
 					game.countPlayer2(function(current){
 						switch(current.identity){
 							case 'rZhu':
@@ -553,7 +553,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 								else if(game.rZhu.isDead()&&game.bZhu.isDead()) loser.push(current);
 								break;
 						}
-					});
+					},true);
 					var winner2=winner.slice(0);
 					var loser2=loser.slice(0);
 					for(var i=0;i<winner.length;i++){
@@ -648,7 +648,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 				}
 			},
 			chooseCharacterPurpleOL:function(){
-				var next=game.createEvent('chooseCharacter',false);
+				var next=game.createEvent('chooseCharacter');
 				next.setContent(function(){
 					"step 0"
 					ui.arena.classList.add('choose-character');
@@ -833,7 +833,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 				});
 			},
 			chooseCharacterPurple:function(){
-				var next=game.createEvent('chooseCharacter',false);
+				var next=game.createEvent('chooseCharacter');
 				next.setContent(function(){
 					"step 0"
 					ui.arena.classList.add('choose-character');
@@ -970,7 +970,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					game.chooseCharacterPurple();
 					return;
 				}
-				var next=game.createEvent('chooseCharacter',false);
+				var next=game.createEvent('chooseCharacter');
 				next.showConfig=true;
 				next.addPlayer=function(player){
 					var list=lib.config.mode_config.identity.identity[game.players.length-3].slice(0);
@@ -1747,7 +1747,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					game.chooseCharacterPurpleOL();
 					return;
 				}
-				var next=game.createEvent('chooseCharacter',false);
+				var next=game.createEvent('chooseCharacter');
 				next.setContent(function(){
 					"step 0"
 					ui.arena.classList.add('choose-character');

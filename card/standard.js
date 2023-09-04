@@ -100,39 +100,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					if(lib.linked.contains(card.nature)) return '出牌阶段，对你攻击范围内的一名角色使用。其须使用一张【闪】，否则你对其造成1点'+get.translation(card.nature)+'属性伤害。';
 					return '出牌阶段，对你攻击范围内的一名角色使用。其须使用一张【闪】，否则你对其造成1点伤害。';
 				},
-				yingbian_prompt:function(card){
-					var str='';
-					if(get.cardtag(card,'yingbian_hit')){
-						str+='此牌不可被响应';
-					}
-					if(get.cardtag(card,'yingbian_damage')){
-						if(str.length) str+='；';
-						str+='此牌的伤害值基数+1';
-					}
-					if(!str.length||get.cardtag(card,'yingbian_add')){
-						if(str.length) str+='；';
-						str+='当你使用此牌选择目标后，你可为此牌增加一个目标';
-					}
-					return str;
-				},
-				yingbian:function(event){
-					var card=event.card,bool=false;
-					if(get.cardtag(card,'yingbian_hit')){
-						bool=true;
-						event.directHit.addArray(game.players);
-						game.log(card,'不可被响应');
-					}
-					if(get.cardtag(card,'yingbian_damage')){
-						bool=true;
-						if(typeof event.baseDamage!='number') event.baseDamage=1;
-						event.baseDamage++;
-						game.log(event.card,'的伤害值基数+1');
-					}
-					if(!bool||get.cardtag(card,'yingbian_add')){
-						event.yingbian_addTarget=true;
-					}
-				},
-				yingbian_tags:['hit','damage','add'],
+				defaultYingbianEffect:'add',
 				filterTarget:function(card,player,target){return player!=target},
 				content:function(){
 					"step 0"
@@ -387,27 +355,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				cardcolor:'red',
 				notarget:true,
 				nodelay:true,
-				yingbian_prompt:function(card){
-					var str='';
-					if(get.cardtag(card,'yingbian_gain')){
-						str+='当你声明使用此牌时，你获得此牌响应的目标牌';
-					}
-					if(!str.length||get.cardtag(card,'yingbian_draw')){
-						if(str.length) str+='；';
-						str+='当你声明使用此牌时，你摸一张牌';
-					}
-					return str;
-				},
-				yingbian_tags:['gain','draw'],
-				yingbian:function(event){
-					var bool=false;
-					if(get.cardtag(event.card,'yingbian_gain')){
-						bool=true;
-						var cardx=event.respondTo;
-						if(cardx&&cardx[1]&&cardx[1].cards&&cardx[1].cards.filterInD('od').length) event.player.gain(cardx[1].cards.filterInD('od'),'gain2','log');
-					}
-					if(!bool||get.cardtag(event.card,'yingbian_draw')) event.player.draw();
-				},
+				defaultYingbianEffect:'draw',
 				content:function(){
 					event.result='shaned';
 					event.getParent().delayx=false;
@@ -734,6 +682,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					else{
 						num=game.countPlayer();
 					}
+					if(card.storage&&typeof card.storage.extraCardsNum=='number') num+=card.storage.extraCardsNum;
 					var cards=get.cards(num);
 					game.cardsGotoOrdering(cards).relatedEvent=event.getParent();
 					var dialog=ui.create.dialog('五谷丰登',cards,true);
@@ -888,11 +837,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				selectTarget:-1,
 				cardcolor:'red',
 				reverseOrder:true,
-				yingbian_prompt:'当你使用此牌选择目标后，你可为此牌减少一个目标',
-				yingbian_tags:['remove'],
-				yingbian:function(event){
-					event.yingbian_removeTarget=true;
-				},
+				defaultYingbianEffect:'remove',
 				filterTarget:function(card,player,target){
 					//return target.hp<target.maxHp;
 					return true;
@@ -928,11 +873,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				type:'trick',
 				enable:true,
 				selectTarget:-1,
-				yingbian_prompt:'当你使用此牌选择目标后，你可为此牌减少一个目标',
-				yingbian_tags:['remove'],
-				yingbian:function(event){
-					event.yingbian_removeTarget=true;
-				},
+				defaultYingbianEffect:'remove',
 				filterTarget:function(card,player,target){
 					return target!=player;
 				},
@@ -1005,11 +946,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				enable:true,
 				selectTarget:-1,
 				reverseOrder:true,
-				yingbian_prompt:'当你使用此牌选择目标后，你可为此牌减少一个目标',
-				yingbian_tags:['remove'],
-				yingbian:function(event){
-					event.yingbian_removeTarget=true;
-				},
+				defaultYingbianEffect:'remove',
 				filterTarget:function(card,player,target){
 					return target!=player;
 				},
@@ -1123,11 +1060,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				fullskin:true,
 				type:'trick',
 				enable:true,
-				yingbian_prompt:'你令此牌不可被响应',
-				yingbian_tags:['hit'],
-				yingbian:function(event){
-					event.directHit.addArray(game.players);
-				},
+				defaultYingbianEffect:'hit',
 				filterTarget:function(card,player,target){
 					return target!=player;
 				},
@@ -1425,11 +1358,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					if(player==target) return false;
 					return target.countDiscardableCards(player,get.is.single()?'he':'hej');
 				},
-				yingbian_prompt:'当你使用此牌选择目标后，你可为此牌增加一个目标',
-				yingbian_tags:['add'],
-				yingbian:function(event){
-					event.yingbian_addTarget=true;
-				},
+				defaultYingbianEffect:'add',
 				content:function(){
 					'step 0'
 					if(!get.is.single()&&target.countDiscardableCards(player,'hej')){
@@ -1587,7 +1516,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				multicheck:function(){
 					var card={name:'sha',isCard:true};
 					return game.hasPlayer(function(current){
-						if(current.getEquip(1)){
+						if(current.getEquips(1).length>0){
 							return game.hasPlayer(function(current2){
 								return current.inRange(current2)&&lib.filter.targetEnabled(card,current,current2);
 							})
@@ -1596,7 +1525,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				},
 				filterTarget:function(card,player,target){
 					var card={name:'sha',isCard:true};
-					return player!=target&&target.getEquip(1)&&game.hasPlayer(function(current){
+					return player!=target&&target.getEquips(1).length>0&&game.hasPlayer(function(current){
 						return target!=current&&target.inRange(current)&&lib.filter.targetEnabled(card,target,current);
 					});
 				},
@@ -1620,7 +1549,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					}
 					"step 1"
 					if(event.directfalse||result.bool==false){
-						var cards=target.getCards('e',{subtype:'equip1'});
+						var cards=target.getEquips(1);
 						if(cards.length) player.gain(cards,target,'give','bySelf');
 					}
 				},
@@ -1664,14 +1593,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				},
 				notarget:true,
 				finalDelay:false,
-				yingbian_tags:['gain','draw'],
-				yingbian_prompt:function(card){
-					if(!get.cardtag(card,'yingbian_gain')) return '当你声明使用此牌时，你摸一张牌';
-					return '当此牌生效后，你获得此牌响应的目标牌';
-				},
-				yingbian:function(event){
-					if(!get.cardtag(event.card,'yingbian_gain')||get.cardtag(event.card,'yingbian_draw')) event.player.draw();
-				},
+				defaultYingbianEffect:'draw',
 				contentBefore:function(){
 					'step 0'
 					if(get.mode()=='guozhan'&&get.cardtag(card,'guo')){
@@ -1724,11 +1646,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 							delete ui.tempnowuxie;
 						}
 					}
-					if(event.card.yingbian&&get.cardtag(event.card,'yingbian_gain')){
-						var cardx=event.getParent().respondTo;
-						if(cardx&&cardx[1]&&cardx[1].cards&&cardx[1].cards.filterInD('od').length) player.gain(cardx[1].cards.filterInD('od'),'gain2','log');
-					}
-				},
+				}
 			},
 			lebu:{
 				audio:true,
@@ -2042,17 +1960,20 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				},
 				mod:{
 					cardUsable:function(card,player,num){
-						var cardx=player.getEquip('zhuge');
-						if(card.name=='sha'&&(!cardx||player.hasSkill('zhuge_skill',null,false)||(!_status.zhuge_temp&&!ui.selected.cards.contains(cardx)))){
-							if(get.is.versus()||get.is.changban()){
-								return num+3;
+						var cards=player.getEquips('zhuge')
+						if(card.name=='sha'){
+							if(!cards.length||player.hasSkill('zhuge_skill',null,false)||cards.some(card=>(card!=_status.zhuge_temp&&!ui.selected.cards.contains(card)))){
+								if(get.is.versus()||get.is.changban()){
+									return num+3;
+								}
+								return Infinity;
 							}
-							return Infinity;
 						}
 					},
 					cardEnabled2:function(card,player){
 						if(!_status.event.addCount_extra||player.hasSkill('zhuge_skill',null,false)) return;
-						if(card&&card==player.getEquip('zhuge')){
+						var cards=player.getEquips('zhuge');
+						if(card&&cards.contains(card)){
 							try{
 								var cardz=get.card();
 							}
@@ -2060,7 +1981,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 								return;
 							}
 							if(!cardz||cardz.name!='sha') return;
-							_status.zhuge_temp=true;
+							_status.zhuge_temp=card;
 							var bool=lib.filter.cardUsable(get.autoViewAs({name:'sha'},ui.selected.cards.concat([card])),player);
 							delete _status.zhuge_temp;
 							if(!bool) return false;
@@ -2157,7 +2078,10 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					"step 0"
 					player.chooseToUse(get.prompt('qinglong',trigger.target),function(card,player,event){
 						if(get.name(card)!='sha') return false;
-						if(player.getEquip('qinglong')==card) return false;
+						if(!player.hasSkill('qinglong_skill',null,false)){
+							var cards=player.getEquips('qinglong');
+							if(!cards.some(card2=>card2!=card&&!ui.selected.cards.contains(card2))) return false;
+						}
 						return lib.filter.filterCard.apply(this,arguments);
 					},trigger.target,-1).set('addCount',false).logSkill='qinglong_skill';
 				}
@@ -2194,16 +2118,20 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				direct:true,
 				audio:true,
 				filter:function(event,player){
-					if(event.type!='card'||event.card.name!='sha') return false;
-					return player.countCards('he',function(card){
-						return card!=player.getEquip('guanshi');
-					})>=2&&event.target.isAlive();
+					if(event.type!='card'||event.card.name!='sha'||!event.target.isIn()) return false;
+					var min=2;
+					if(!player.hasSkill('guanshi_skill',null,false)) min+=get.sgn(player.getEquips('guanshi').length)
+					return player.countCards('he')>=min;
 				},
 				content:function(){
 					"step 0"
-					var next=player.chooseToDiscard(get.prompt('guanshi'),2,'he',function(card){
-						return _status.event.player.getEquip('guanshi')!=card;
-					});
+					//装备区内可能有多个贯石斧 或者玩家可能通过其他渠道获得贯石斧技能 只要留一张贯石斧不扔掉即可
+					var next=player.chooseToDiscard(get.prompt('guanshi'),2,'he',function(card,player){
+						if(_status.event.ignoreCard) return true;
+						var cards=player.getEquips('guanshi');
+						if(!cards.contains(card)) return true;
+						return cards.some(cardx=>(cardx!=card&&!ui.selected.cards.contains(cardx)));
+					}).set('ignoreCard',player.hasSkill('guanshi_skill',null,false)).set('complexCard',true)
 					next.logSkill='guanshi_skill';
 					next.set('ai',function(card){
 						var evt=_status.event.getTrigger();
@@ -2547,6 +2475,9 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 											return 0;
 										}
 									}
+									if(name=='bingliang'&&source.countCards('j')>0&&source.countCards('h')>=source.hp-1){
+										return 0;
+									}
 									var card2;
 									if(name!=card.name){
 										card2={name:name};
@@ -2732,7 +2663,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					if(event.wuxieresult&&event.wuxieresult2&&event.wuxieresult2.skill){
 						var info=get.info(event.wuxieresult2.skill);
 						if(info&&info.precontent&&!game.online){
-							var next=game.createEvent('pre_'+event.wuxieresult2);
+							var next=game.createEvent('pre_'+event.wuxieresult2.skill);
 							next.setContent(info.precontent);
 							next.set('result',event.wuxieresult2);
 							next.set('player',event.wuxieresult);
@@ -3240,7 +3171,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 			wuxie_info:'一张锦囊牌生效前，对此牌使用。抵消此牌对一名角色产生的效果，或抵消另一张【无懈可击】产生的效果。',
 			lebu_info:'出牌阶段，对一名其他角色使用。若判定结果不为红桃，跳过其出牌阶段。',
 			shandian_info:'出牌阶段，对自己使用。若判定结果为黑桃2~9，则目标角色受到3点雷电伤害。若判定不为黑桃2~9，将之移动到下家的判定区里。',
-			icesha_skill:'冰杀',
+			icesha_skill:'冰冻',
 			icesha_skill_info:'防止即将造成的伤害，改为依次弃置其两张牌。',
 			qinggang2:'破防',
 		},
