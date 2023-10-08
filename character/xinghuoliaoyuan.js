@@ -523,6 +523,23 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 						},
 					},
 				},
+				ai:{
+					effect:{
+						target:function(card,player,target,current){
+							if(get.type(card)=='equip'&&!get.cardtag(card,'gifts')&&game.hasPlayer(function(current){
+								return target.canUse('sha',current);
+							})) return [1,1.5];
+						}
+					},
+					noe:true,
+					reverseEquip:true,
+					skillTagFilter:function(player,tag,arg){
+						if(tag=='noe') return player.countCards('e')==player.hp+1;
+						return game.hasPlayer(function(current){
+							return player.canUse('sha',current);
+						});
+					}
+				}
 			},
 			xinfu_jijun:{
 				ai:{
@@ -810,6 +827,31 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					target.addToExpansion(cards,player,'give').gaintag.add('xinfu_zengdao2');
 					target.addSkill('xinfu_zengdao2');
 				},
+				ai:{
+					order:function(){
+						var player=_status.event.player,num=0;
+						if(player.hasCard((card)=>get.value(card,player)<0,'e')) return 9;
+						for(var i=1;i<6;i++){
+							num+=player.countEquipableSlot(i);
+						}
+						if(num<=2) return 9;
+						var targets=player.getStorage('xinfu_weilu_recover'),num=0;
+						if(player.hp<=2||!game.hasPlayer((current)=>{
+							if(player==current||get.attitude(player,current)<0||current.hp<=1) return false;
+							for(var arr of targets){
+								if(current==arr[0]) break;
+							}
+							return current.hp>2||current.countCards('hs')>2;
+						})) return 1;
+						return 0;
+					},
+					result:{
+						target:function(player,target){
+							if(target.hasValueTarget({name:'sha',isCard:true})) return ui.selected.cards.length;
+							return 0;
+						}
+					}
+				}
 			},
 			xinfu_zengdao2:{
 				trigger:{source:'damageBegin1'},
@@ -1523,17 +1565,19 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			},
 		},
 		characterReplace:{
-			duji:['re_duji','duji','ns_duji'],
-			sp_taishici:['re_sp_taishici','sp_taishici'],
+			duji:['duji','re_duji','ns_duji'],
+			sp_taishici:['sp_taishici','re_sp_taishici'],
 			mazhong:['mazhong','re_mazhong'],
-			wenpin:['re_wenpin','wenpin'],
-			liuyan:['jsrg_liuyan','ol_liuyan','liuyan'],
+			wenpin:['wenpin','re_wenpin'],
+			liuyan:['liuyan','jsrg_liuyan','ol_liuyan'],
 		},
 		translate:{
 			xinghuoliaoyuan:'星火燎原',
 			"sp_taishici":"SP太史慈",
+			sp_taishici_prefix:'SP',
 			wangcan:"王粲",
 			"re_jsp_pangtong":"SP庞统",
+			re_jsp_pangtong_prefix:'SP',
 			lvdai:"吕岱",
 			"re_zhangliang":"张梁",
 			lvqian:"吕虔",

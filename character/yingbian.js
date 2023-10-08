@@ -1396,19 +1396,14 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			},
 			olxibing:{
 				audio:2,
-				trigger:{
-					player:'damageEnd',
-					source:'damageSource',
-				},
+				trigger:{player:'damageEnd'},
 				filter:function(event,player){
-					return event.player&&event.source&&event.player!=event.source&&
-					event.player.isAlive()&&event.source.isAlive()&&
-					(event.player.countCards('he')>0||event.source.countCards('he')>0);
+					return event.player&&event.source&&event.player!=event.source&&event.player.isAlive()&&event.source.isAlive()&&(event.player.countCards('he')>0||event.source.countCards('he')>0);
 				},
 				direct:true,
 				content:function(){
 					'step 0'
-					var target=(player==trigger.player?trigger.source:trigger.player);
+					var target=trigger.source;
 					event.target=target;
 					player.chooseTarget(get.prompt('olxibing'),'弃置自己或'+get.translation(target)+'的两张牌，然后手牌数较少的角色摸两张牌且不能对你使用牌直到回合结束',function(card,player,target){
 						if(target!=player&&target!=_status.event.target) return false;
@@ -2312,31 +2307,17 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				forced:true,
 				preHidden:true,
 				filter:function(event,player){
-					return !player.hasSkill('caiyuan_mark')&&player.phaseNumber>1;
+					if(player.phaseNumber<=1) return false;
+					const history1=_status.globalHistory,history2=player.actionHistory;
+					for(let i=0;i<Math.min(history1.length,history2.length);i++){
+						let i1=history1.length-1-i,i2=history2.length-1-i;
+						if(i>0&&history2[i2].isMe) break;
+						if(history1[i1].changeHp.some(evt=>evt.player==player&&evt.num<0)) return false;
+					}
+					return true;
 				},
 				content:function(){
 					player.draw(2);
-				},
-				group:'caiyuan_count',
-				subSkill:{
-					mark:{
-						//mark:true,
-						marktext:'媛',
-						charlotte:true,
-						intro:{content:'已扣减过体力'},
-					},
-					count:{
-						trigger:{player:'changeHp'},
-						silent:true,
-						charlotte:true,
-						filter:function(event,player){
-							return event.num<0&&!player.hasSkill('caiyuan_mark');
-						},
-						content:function(){
-							player.addTempSkill('caiyuan_mark',{player:'phaseAfter'});
-							if(player.hasSkill('caiyuan')) player.markSkill('caiyuan_mark');
-						},
-					},
 				},
 			},
 			zhuosheng:{
@@ -3602,14 +3583,14 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			xuangongzhu:['duyu'],
 		},
 		characterReplace:{
-			yanghu:['dc_yanghu','jin_yanghu','sp_yanghu'],
+			yanghu:['jin_yanghu','dc_yanghu','sp_yanghu'],
 			jiachong:['jin_jiachong','jiachong'],
 			yangyan:['yangyan','old_yangyan'],
 			yangzhi:['yangzhi','old_yangzhi'],
 		},
 		translate:{
 			jin_zhangchunhua:'晋张春华',
-			jin_zhangchunhua_ab:'张春华',
+			jin_zhangchunhua_prefix:'晋',
 			huishi:'慧识',
 			huishi_info:'摸牌阶段，你可以放弃摸牌，改为观看牌堆顶的X张牌，获得其中的一半（向下取整），然后将其余牌置入牌堆底。（X为牌堆数量的个位数）',
 			qingleng:'清冷',
@@ -3618,7 +3599,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			xuanmu2:'宣穆',
 			xuanmu_info:'锁定技，隐匿技。你于其他角色的回合登场时，防止你受到的伤害直到回合结束。',
 			jin_simayi:'晋司马懿',
-			jin_simayi_ab:'司马懿',
+			jin_simayi_prefix:'晋',
 			zhanghuyuechen:'张虎乐綝',
 			xijue:'袭爵',
 			xijue_gain:'袭爵',
@@ -3630,7 +3611,9 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			xijue_xiaoguo:'骁果',
 			xijue_xiaoguo_info:'其他角色的结束阶段开始时，你可以弃置一张基本牌，令该角色选择一项：1.弃置一张装备牌，然后你摸一张牌；2.受到你对其造成的1点伤害。',
 			xijue_xiaoguo_info_guozhan:'其他角色的结束阶段开始时，你可以弃置一张基本牌，令该角色选择一项：1.弃置一张装备牌；2.受到你对其造成的1点伤害。',
-			duyu:'OL杜预',
+			gz_duyu:'杜预',
+			duyu:'晋杜预',
+			duyu_prefix:'晋',
 			sanchen:'三陈',
 			sanchen_info:'出牌阶段限一次。你可选择一名本回合内未选择过的角色。其摸三张牌，然后弃置三张牌。若其未以此法弃置牌或以此法弃置的牌的类别均不相同，则其摸一张牌且〖三陈〗于此阶段内使用次数上限+1。',
 			sanchen_info_guozhan:'出牌阶段，你可选择一名本回合内未选择过的角色。其摸三张牌，然后弃置三张牌。若其未以此法弃置牌或以此法弃置的牌的类别均不相同，则其摸一张牌且你获得技能〖破竹〗直到回合结束。否则你本阶段内不能再发动〖三陈〗。',
@@ -3640,7 +3623,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			pozhu_info:'出牌阶段，你可以将一张手牌当做【出其不意】使用。若你未因此牌造成过伤害，则你不能再发动〖破竹〗直到回合结束。',
 			pozhu_info_guozhan:'出牌阶段限一次，你可以将一张手牌当做【出其不意】使用。',
 			jin_wangyuanji:'晋王元姬',
-			jin_wangyuanji_ab:'王元姬',
+			jin_wangyuanji_prefix:'晋',
 			shiren:'识人',
 			shiren_info:'隐匿技。你于其他角色的回合内登场时，若其有手牌，则你可对其发动〖宴戏〗。',
 			yanxi:'宴戏',
@@ -3648,7 +3631,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			yanxi_info:'出牌阶段，你可选择一名有手牌的角色。你将该角色的一张随机手牌与牌堆顶的两张牌混合后展示，并选择其中一张。若你以此法选择的是该角色的手牌，则你获得这三张牌。否则你获得选择的牌。你通过〖宴戏〗得到的牌，不计入当前回合的手牌上限。',
 			yanxi_info_guozhan:'出牌阶段，你可选择一名有手牌的角色。你将该角色的一张随机手牌与牌堆中的两张随机牌混合后展示，并选择其中一张。若你以此法选择的是该角色的手牌，则你获得这三张牌。否则你获得选择的牌。你通过〖宴戏〗得到的牌，不计入当前回合的手牌上限。',
 			jin_simazhao:'晋司马昭',
-			jin_simazhao_ab:'司马昭',
+			jin_simazhao_prefix:'晋',
 			tuishi:'推弑',
 			tuishi_info:'隐匿技，你于其他角色A的回合内登场时，可于此回合结束时选择其攻击范围内的一名角色B。A选择一项：①对B使用一张【杀】。②你对A造成1点伤害。',
 			choufa:'筹伐',
@@ -3663,7 +3646,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			chengwu:'成务',
 			chengwu_info:'主公技，锁定技，其他晋势力角色攻击范围内的角色视为在你的攻击范围内。',
 			jin_xiahouhui:'晋夏侯徽',
-			jin_xiahouhui_ab:'夏侯徽',
+			jin_xiahouhui_prefix:'晋',
 			baoqie:'宝箧',
 			baoqie_info:'隐匿技，锁定技。你登场后，从牌堆中获得一张不为赠物的宝物牌。若此牌在你的手牌区内为宝物牌，则你可以使用此牌。',
 			jyishi:'宜室',
@@ -3671,7 +3654,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			shiduo:'识度',
 			shiduo_info:'出牌阶段限一次，你可以与一名其他角色拼点。若你赢，你获得其所有手牌。然后你交给其X张手牌（X为你手牌数的一半，向下取整）。',
 			jin_simashi:'晋司马师',
-			jin_simashi_ab:'司马师',
+			jin_simashi_prefix:'晋',
 			taoyin:'韬隐',
 			taoyin2:'韬隐',
 			taoyin_info:'隐匿技，当你登场后，若当前回合角色存在且不是你，则你可令该角色本回合的手牌上限-2。',
@@ -3697,14 +3680,14 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			zhuosheng_info:'出牌阶段，①你使用本轮内得到的基本牌时无次数和距离限制。②你使用本轮内获得的普通锦囊牌选择目标后，可令此牌的目标数+1或-1。③你使用本轮内得到的装备牌时可以摸一张牌（以此法得到的牌不能触发〖擢升〗）。',
 			zhuosheng_info_guozhan:'出牌阶段，①你使用本轮内得到的基本牌时无距离限制。②你使用本轮内获得的普通锦囊牌选择目标后，可令此牌的目标数+1或-1。③你使用本轮内得到的装备牌时可以摸一张牌（以此法得到的牌不能触发〖擢升〗）。',
 			jin_yanghuiyu:'晋羊徽瑜',
-			jin_yanghuiyu_ab:'羊徽瑜',
+			jin_yanghuiyu_prefix:'晋',
 			gz_jin_yanghuiyu:'羊徽瑜',
 			huirong:'慧容',
 			huirong_info:'隐匿技，锁定技。当你登场后，你令一名角色将手牌数摸至/弃至与体力值相同（至多摸至五张）。',
 			ciwei:'慈威',
 			ciwei_info:'一名角色于其回合内使用第二张牌时，若此牌为基本牌或普通锦囊牌，则你可以弃置一张牌，取消此牌的所有目标。',
 			caiyuan:'才媛',
-			caiyuan_info:'锁定技，当你扣减体力时，你获得一枚“才媛”标记直到你的下回合结束。回合结束时，若你没有“才媛”标记且此回合不是你的第一个回合，则	你摸两张牌。',
+			caiyuan_info:'锁定技。回合结束时，若你于你的上一个回合结束后未扣减过体力，则你摸两张牌。',
 			simazhou:'司马伷',
 			caiwang:'才望',
 			caiwang_info:'当你使用或打出牌响应其他角色使用的牌，或其他角色使用或打出牌响应你使用的牌后，若这两张牌颜色相同，则你可以弃置对方的一张牌。',
@@ -3738,11 +3721,12 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			yifa2:'仪法',
 			yifa_info:'锁定技，其他角色使用【杀】或黑色普通锦囊牌指定你为目标后，其手牌上限-1直到其回合结束。',
 			ol_huaxin:'OL华歆',
+			ol_huaxin_prefix:'OL',
 			caozhao:'草诏',
 			caozhao_backup:'草诏',
 			caozhao_info:'出牌阶段限一次，你可展示一张手牌并声明一种未以此法声明过的基本牌或普通锦囊牌，令一名体力不大于你的其他角色选择一项：令此牌视为你声明的牌，或其失去1点体力。然后若此牌声明成功，然后你可将其交给一名其他角色。',
 			olxibing:'息兵',
-			olxibing_info:'每当你受到其他角色造成的伤害后/对其他角色造成伤害后，你可弃置你或该角色两张牌，然后你们中手牌少的角色摸两张牌，以此法摸牌的角色不能使用牌指定你为目标直到回合结束。',
+			olxibing_info:'当你受到其他角色造成的伤害后，你可弃置你或该角色两张牌，然后你们中手牌少的角色摸两张牌，以此法摸牌的角色不能使用牌指定你为目标直到回合结束。',
 			recaiwang:'才望',
 			recaiwang_info:'①当你使用或打出牌响应其他角色使用的牌，或其他角色使用或打出牌响应你使用的牌后，若这两张牌颜色相同，则你可以弃置对方的一张牌。②若你的手牌数为1，则你可以将该手牌当做【闪】使用或打出。③若你的装备区牌数为1，则你可以将该装备当做【无懈可击】使用或打出。④若你的判定区牌数为1，则你可以将该延时锦囊牌当做【杀】使用或打出。',
 			recaiwang_hand:'才望',
@@ -3770,7 +3754,8 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			qimei_info:'准备阶段，你可以选择一名其他角色。你获得如下效果直到下回合开始：①每回合限一次，当你或其获得牌/失去手牌后，若你与其手牌数相等，则另一名角色摸一张牌。②每回合限一次，当你或其的体力值变化后，若你与其体力值相等，则另一名角色摸一张牌。',
 			ybzhuiji:'追姬',
 			ybzhuiji_info:'出牌阶段开始时，你可选择一项：①摸两张牌，并于出牌阶段结束时失去1点体力；②回复1点体力，并于出牌阶段结束时弃置两张牌。',
-			jin_yanghu:'OL羊祜',
+			jin_yanghu:'晋羊祜',
+			jin_yanghu_prefix:'晋',
 			huaiyuan:'怀远',
 			huaiyuanx:'绥',
 			huaiyuan_info:'①游戏开始时，你将你的手牌标记为“绥”。②当你失去一张“绥”后，你令一名角色执行一项：⒈其的手牌上限+1。⒉其的攻击范围+1。⒊其摸一张牌。③当你死亡时，你可令一名其他角色的手牌上限+X，且攻击范围+Y（X和Y为你自己被执行过〖怀远②〗的选项一和选项二的次数）。',
@@ -3797,6 +3782,12 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			wangxiang:'王祥',
 			bingxin:'冰心',
 			bingxin_info:'每种牌名每回合限一次。当你需要使用基本牌时，若你的手牌数等于体力值且这些牌的颜色均相同，则你可以摸一张牌，视为使用一张基本牌。',
+			ol_lisu:'OL李肃',
+			ol_lisu_prefix:'OL',
+			qiaoyan:'巧言',
+			qiaoyan_info:'锁定技，当你于回合外受到其他角色造成的伤害时，若你：有“珠”，则你令伤害来源获得“珠”；没有“珠”，则你防止此伤害，然后摸一张牌，并将一张牌正面朝上置于武将牌上，称为“珠”。',
+			xianzhu:'献珠',
+			xianzhu_info:'锁定技，出牌阶段开始时，你令一名角色A获得“珠”。若A不为你自己，则你选择A攻击范围内的一名角色B，视为A对B使用一张【杀】。',
 
 			yingbian_pack1:'文德武备·理',
 			yingbian_pack2:'文德武备·备',
