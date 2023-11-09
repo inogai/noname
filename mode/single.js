@@ -250,6 +250,7 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 			game.phaseLoop(game.zhu);
 		},
 		game:{
+			canReplaceViewpoint:()=>true,
 			addRecord:function(bool){
 				if(typeof bool=='boolean'){
 					var mode=_status.mode;
@@ -809,7 +810,6 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 		},
 		element:{
 			player:{
-				hasZhuSkill:function(){return false;},
 				dieAfter:function(){
 					if(_status.mode!='normal'||_status.characterChoice[this.identity].length<=3) game.checkResult();
 				},

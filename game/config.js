@@ -1,6 +1,8 @@
 window.config={
 	extension_sources:{
-		GitHub:'https://raw.githubusercontent.com/libccy/noname-extension/master/',
+		'GitHub Proxy':'https://ghproxy.com/https://raw.githubusercontent.com/libccy/noname-extension/master/',
+		FastGit:'https://raw.fgit.cf/libccy/noname-extension/master/',
+		GitHub:'https://raw.githubusercontent.com/libccy/noname-extension/master/'
 	},
 	extension_source:'Coding',
 	forbidai:['ns_liuzhang'],
@@ -167,6 +169,8 @@ window.config={
 				['zhu','zhong','nei','fan','fan','fan'],
 				['zhu','zhong','zhong','nei','fan','fan','fan'],
 				['zhu','zhong','zhong','nei','fan','fan','fan','fan'],
+				['zhu','zhong','zhong','zhong','nei','fan','fan','fan','fan'],
+				['zhu','zhong','zhong','zhong','nei','nei','fan','fan','fan','fan'],
 			],
 			choice:{
 				zhu:3,
@@ -240,5 +244,6 @@ window.config={
 		['akane_quanqing','lianying'],
 		['akane_quanqing','relianying'],
 		['akane_quanqing','shangshi'],
+		['dcruyi','cxliushi'],
 	]
 };

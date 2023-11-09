@@ -96,9 +96,17 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				},
 				selectTarget:1,
 				cardPrompt:function(card){
-					if(card.nature=='stab') return '出牌阶段，对你攻击范围内的一名角色使用。其须使用一张【闪】，且在此之后需弃置一张手牌（没有则不弃）。否则你对其造成1点伤害。';
-					if(lib.linked.contains(card.nature)) return '出牌阶段，对你攻击范围内的一名角色使用。其须使用一张【闪】，否则你对其造成1点'+get.translation(card.nature)+'属性伤害。';
-					return '出牌阶段，对你攻击范围内的一名角色使用。其须使用一张【闪】，否则你对其造成1点伤害。';
+					var natures=get.natureList(Array.isArray(card)?card[3]:card);
+					if(lib.translate['sha_nature_'+natures[0]+'_info']) return lib.translate['sha_nature_'+natures[0]+'_info'];
+					var str='出牌阶段，对你攻击范围内的一名角色使用。其须使用一张【闪】，';
+					if(natures.includes('stab')){
+						str+='且在此之后需弃置一张手牌（没有则不弃）。';
+					}
+					str+='否则你对其造成1点';
+					var linked=lib.linked.filter(n=>natures.includes(n));
+					if(linked.length) str+=get.translation(get.nature(linked))+'属性';
+					str+='伤害。';
+					return str;
 				},
 				defaultYingbianEffect:'add',
 				filterTarget:function(card,player,target){return player!=target},
@@ -126,14 +134,14 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 						if(event.shanRequired>1){
 							next.set('prompt2','（共需使用'+event.shanRequired+'张闪）');
 						}
-						else if(event.card.nature=='stab'){
+						else if(game.hasNature(event.card,'stab')){
 							next.set('prompt2','（在此之后仍需弃置一张手牌）');
 						}
 						next.set('ai1',function(card){
 							var target=_status.event.player;
 							var evt=_status.event.getParent();
 							var bool=true;
-							if(_status.event.shanRequired>1&&!get.is.object(card)&&target.countCards('h','shan')<_status.event.shanRequired){
+							if(_status.event.shanRequired>1&&!get.is.object(card)&&target.countCards('h','shan')<_status.event.shanRequired-(_status.event.shanIgnored||0)){
 								bool=false;
 							}
 							else if(target.hasSkillTag('useShan')){
@@ -160,7 +168,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 						if(event.shanRequired>0){
 							event.goto(1);
 						}
-						else if(event.card.nature=='stab'&&target.countCards('h')>0){
+						else if(game.hasNature(event.card,'stab')&&target.countCards('h')>0){
 							event.responded=result;
 							event.goto(4);
 						}
@@ -171,7 +179,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					}
 					"step 3"
 					if((!result||!result.bool||!result.result||result.result!='shaned')&&!event.unhurt){
-						target.damage(get.nature(event.card),event.baseDamage+event.extraDamage);
+						target.damage(get.nature(event.card));
 						event.result={bool:true}
 						event.trigger('shaDamage');
 					}
@@ -193,7 +201,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					});
 					"step 5"
 					if((!result||!result.bool)&&!event.unhurt){
-						target.damage(get.nature(event.card),event.baseDamage+event.extraDamage);
+						target.damage(get.nature(event.card));
 						event.result={bool:true}
 						event.trigger('shaDamage');
 						event.finish();
@@ -203,7 +211,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					}
 					"step 6"
 					if((!result||!result.bool)&&!event.unhurt){
-						target.damage(get.nature(event.card),event.baseDamage+event.extraDamage);
+						target.damage(get.nature(event.card));
 						event.result={bool:true}
 						event.trigger('shaDamage');
 						event.finish();
@@ -257,7 +265,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					},
 					order:function(item,player){
 						if(player.hasSkillTag('presha',true,null,true)) return 10;
-						if(lib.linked.contains(get.nature(item))){
+						if(game.hasNature(item,'linked')){
 							if(game.hasPlayer(function(current){
 								return current!=player&&current.isLinked()&&player.canUse(item,current,null,true)&&get.effect(current,item,player,player)>0&&lib.card.sha.ai.canLink(player,current,item);
 							})&&game.countPlayer(function(current){
@@ -298,20 +306,20 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 						respond:1,
 						respondShan:1,
 						damage:function(card){
-							if(card.nature=='poison') return;
+							if(game.hasNature(card,'poison')) return;
 							return 1;
 						},
 						natureDamage:function(card){
-							if(card.nature) return 1;
+							if(game.hasNature(card)) return 1;
 						},
 						fireDamage:function(card,nature){
-							if(card.nature=='fire') return 1;
+							if(game.hasNature(card,'fire')) return 1;
 						},
 						thunderDamage:function(card,nature){
-							if(card.nature=='thunder') return 1;
+							if(game.hasNature(card,'thunder')) return 1;
 						},
 						poisonDamage:function(card,nature){
-							if(card.nature=='poison') return 1;
+							if(game.hasNature(card,'poison')) return 1;
 						}
 					}
 				}
@@ -330,20 +338,20 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 						respond:1,
 						respondShan:1,
 						damage:function(card){
-							if(card.nature=='poison') return;
+							if(game.hasNature(card,'poison')) return;
 							return 1;
 						},
 						natureDamage:function(card){
-							if(card.nature) return 1;
+							if(game.hasNature(card)) return 1;
 						},
 						fireDamage:function(card,nature){
-							if(card.nature=='fire') return 1;
+							if(game.hasNature(card,'fire')) return 1;
 						},
 						thunderDamage:function(card,nature){
-							if(card.nature=='thunder') return 1;
+							if(game.hasNature(card,'thunder')) return 1;
 						},
 						poisonDamage:function(card,nature){
-							if(card.nature=='poison') return 1;
+							if(game.hasNature(card,'poison')) return 1;
 						}
 					}
 				}
@@ -388,71 +396,127 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					return target.hp<target.maxHp;
 				},
 				content:function(){
-					target.recover(event.baseDamage||1);
+					target.recover();
 				},
 				ai:{
 					basic:{
-						order:function(card,player){
-							if(player.hasSkillTag('pretao')) return 5;
+						order:(card,player)=>{
+							if(player.hasSkillTag('pretao')) return 9;
 							return 2;
 						},
-						useful:[6.5,4,3,2],
-						value:[6.5,4,3,2],
+						useful:(card,i)=>{
+							let player = _status.event.player;
+							if(player.isDamaged()&&!game.checkMod(card,player,'unchanged','cardEnabled2',player)) return 2/(1+i);
+							let fs = game.filterPlayer(current=>{
+								return get.attitude(player,current)>0&&current.hp<=2;
+							}), damaged = 0, needs = 0;
+							fs.forEach(f=>{
+								if(!lib.filter.cardSavable(card,player,f)) return;
+								if(f.hp>1) damaged++;
+								else needs++;
+							});
+							if(needs&&damaged) return 5*needs+3*damaged;
+							if(needs+damaged>1 || player.hasSkillTag('maixie')) return 8;
+							if(player.hp/player.maxHp<0.7) return 7+Math.abs(player.hp/player.maxHp-0.5);
+							if(needs) return 7;
+							if(damaged) return Math.max(3,6.4-i);
+							return 6.8-Math.min(5,player.hp);
+						},
+						value:(card,player,i)=>{
+							let fs = game.filterPlayer(current=>{
+								return get.attitude(_status.event.player,current)>0;
+							}), damaged = 0, needs = 0;
+							fs.forEach(f=>{
+								if(!player.canUse('tao',f)) return;
+								if(f.hp<=1) needs++;
+								else if(f.hp==2) damaged++;
+							});
+							if(needs>2) return 11;
+							if(needs>1) return 10;
+							if(needs&&damaged || player.hasSkillTag('maixie')) return 9;
+							if(needs || damaged>1) return 8;
+							if(damaged) return 7.5;
+							return Math.max(1,9.2-player.hp);
+						}
 					},
 					result:{
-						target:2,
-						target_use:function(player,target){
-							// if(player==target&&player.hp<=0) return 2;
-							if(player.hasSkillTag('nokeep',true,null,true)) return 2;
-							var nd=player.needsToDiscard();
-							var keep=false;
-							if(nd<=0){
-								keep=true;
-							}
-							else if(nd==1&&target.hp>=2&&target.countCards('h','tao')<=1){
-								keep=true;
-							}
-							var mode=get.mode();
-							if(target.hp>=2&&keep&&target.hasFriend()){
-								if(target.hp>2||nd==0) return 0;
-								if(target.hp==2){
-									if(game.hasPlayer(function(current){
-										if(target!=current&&get.attitude(target,current)>=3){
-											if(current.hp<=1) return true;
-											if((mode=='identity'||mode=='versus'||mode=='chess')&&current.identity=='zhu'&&current.hp<=2) return true;
+						target:(player,target)=>{
+							if(target.hasSkillTag('maixie')) return 3;
+							return 2;
+						},
+						target_use:(player,target,card)=>{
+							if(player===_status.currentPhase&&player.hasSkillTag('nokeep',true,{
+								card:card,
+								target:target
+							},true)) return 2;
+							let mode = get.mode(),
+								taos = player.getCards('hs',i=>get.name(i)==='tao'&&lib.filter.cardEnabled(i,target,'forceEnable'));
+							if(target.hp>0){
+								let min = 7.2-1.2*Math.min(3,player.hp),
+									nd = player.needsToDiscard(-player.countCards('h',i=>!taos.includes(i)&&get.value(i)<min)),
+									keep = 0;
+								if(taos.length>1&&(nd>1||nd&&player.hp<1+taos.length) || target.identity==='zhu'&&target.hp<3&&(mode==='identity'||mode==='versus'||mode==='chess')) return 2;
+								if(nd<3&&game.hasPlayer(current=>{
+									return player!==current&&current.identity==='zhu'&&current.hp<3&&(mode==='identity'||mode==='versus'||mode==='chess')&&get.attitude(player,current)>0;
+								})){
+									nd=0;
+									keep=3;
+								}
+								else if(nd<2 || !player.isPhaseUsing()){
+									if(nd<1) keep = 3;
+									else if(target.hp>=2&&taos.length<=target.hp/2) keep = 1;
+								}
+								if(keep){
+									if(!nd || game.countPlayer(current=>{
+										if(player!==current&&current.hp<3&&player.hp>current.hp&&get.attitude(player,current)>2){
+											keep += player.hp-current.hp;
+											return true;
 										}
+										return false;
 									})){
-										return 0;
+										if(keep>2) return 0;
 									}
 								}
 							}
-							if(target.hp<0&&target!=player&&target.identity!='zhu') return 0;
-							var att=get.attitude(player,target);
-							if(att<3&&att>=0&&player!=target) return 0;
-							var tri=_status.event.getTrigger();
-							if(mode=='identity'&&player.identity=='fan'&&target.identity=='fan'){
-								if(tri&&tri.name=='dying'&&tri.source&&tri.source.identity=='fan'&&tri.source!=target){
-									var num=game.countPlayer(function(current){
-										if(current.identity=='fan'){
-											return current.countCards('h','tao');
+							if(target.isZhu2() || target===game.boss) return 2;
+							if(player!==target){
+								if(target.hp<0&&taos.length+target.hp<=0) return 0;
+								if(Math.abs(get.attitude(player,target))<1) return 0;
+							}
+							if(!player.getFriends().length) return 2;
+							let tri = _status.event.getTrigger(),
+								num = game.countPlayer(current=>{
+									if(get.attitude(current,target)>0) return current.countCards('hs',i=>get.name(i)==='tao'&&lib.filter.cardEnabled(i,target,'forceEnable'));
+								}),
+								dis = 1,
+								t = _status.currentPhase||game.me;
+							while(t!==target){
+								let att = get.attitude(player,t);
+								if(att<-2) dis++;
+								else if(att<1) dis += 0.45;
+								t = t.next;
+							}
+							if(mode==='identity'){
+								if(tri&&tri.name==='dying'){
+									if(target.identity==='fan') {
+										if(!tri.source&&player!==target || tri.source&&tri.source!==target&&player.getFriends().includes(tri.source.identity)){
+											if(num>dis || player===target&&player.countCards('hs',{type:'basic'})>1.6*dis) return 2;
+											return 0;
 										}
-									});
-									if(num>1&&player==target) return 2;
-									return 0;
+									}
+									else if(tri.source&&tri.source.isZhu&&(target.identity==='zhong'||target.identity==='mingzhong')&&
+										(tri.source.countCards('he')>2||player===tri.source&&player.hasCard((i)=>i.name!=='tao','he'))) return 2;
+									//if(player!==target&&!target.isZhu&&target.countCards('hs')<dis) return 0;
+								}
+								if(player.identity==='zhu'){
+									if(player.hp<=1&&player!==target&&taos+player.countCards('hs','jiu')<=Math.min(dis,game.countPlayer(current=>{
+										return current.identity==='fan';
+									}))) return 0;
 								}
 							}
-							if(mode=='identity'&&player.identity=='zhu'&&target.identity=='nei'){
-								if(tri&&tri.name=='dying'&&tri.source&&tri.source.identity=='zhong'){
-									return 0;
-								}
-							}
-							if(mode=='stone'&&target.isMin()&&
-							player!=target&&tri&&tri.name=='dying'&&player.side==target.side&&
-							tri.source!=target.getEnemy()){
-								return 0;
-							}
+							else if(mode==='stone'&&target.isMin()&&player!==target&&tri&&tri.name==='dying'&&player.side===target.side&&tri.source!==target.getEnemy()) return 0;
 							return 2;
-						},
+						}
 					},
 					tag:{
 						recover:1,
@@ -846,12 +910,13 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					return target.isHealthy();
 				},
 				content:function(){
-					target.recover(event.baseDamage||1);
+					target.recover();
 				},
 				ai:{
 					basic:{
-						order:function(){
-							return 11;
+						order:(item,player)=>{
+							if(game.hasPlayer(current=>current.hp<=1&&get.recoverEffect(current,player,_status.event.player)<0)) return 1;
+							return 10;
 						},
 						useful:[3,1],
 						value:0,
@@ -880,10 +945,15 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				reverseOrder:true,
 				content:function(){
 					"step 0"
+					if(typeof event.shaRequired!='number'||!event.shaRequired||event.shaRequired<0) event.shaRequired=1;
 					if(typeof event.baseDamage!='number') event.baseDamage=1;
+					"step 1"
 					if(event.directHit) event._result={bool:false};
 					else{
 						var next=target.chooseToRespond({name:'sha'});
+						if(event.shaRequired>1){
+							next.set('prompt2','共需打出'+event.shaRequired+'张杀');
+						}
 						next.set('ai',function(card){
 							var evt=_status.event.getParent();
 							if(get.damageEffect(evt.target,evt.player,evt.target)>=0) return 0;
@@ -893,9 +963,13 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 						});
 						next.autochoose=lib.filter.autoRespondSha;
 					}
-					"step 1"
+					"step 2"
 					if(result.bool==false){
-						target.damage(event.baseDamage,event.customSource||player);
+						target.damage();
+					}
+					else{
+						event.shaRequired--;
+						if(event.shaRequired>0) event.goto(1);
 					}
 				},
 				ai:{
@@ -952,10 +1026,15 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				},
 				content:function(){
 					"step 0"
+					if(typeof event.shanRequired!='number'||!event.shanRequired||event.shanRequired<0) event.shanRequired=1;
 					if(typeof event.baseDamage!='number') event.baseDamage=1;
+					"step 1"
 					if(event.directHit) event._result={bool:false};
 					else{
 						var next=target.chooseToRespond({name:'shan'});
+						if(event.shanRequired>1){
+							next.set('prompt2','共需打出'+event.shanRequired+'张闪');
+						}
 						next.set('ai',function(card){
 							var evt=_status.event.getParent();
 							if(get.damageEffect(evt.target,evt.player,evt.target)>=0) return 0;
@@ -968,9 +1047,13 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 						});
 						next.autochoose=lib.filter.autoRespondShan;
 					}
-					"step 1"
+					"step 2"
 					if(result.bool==false){
-						target.damage(event.baseDamage);
+						target.damage();
+					}
+					else{
+						event.shanRequired--;
+						if(event.shanRequired>0) event.goto(1);
 					}
 				},
 				ai:{
@@ -1097,14 +1180,14 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 							if(event.shaRequired>1&&player.countCards('h','sha')<event.shaRequired) return 0;
 							if(event.player==target){
 								if(player.hasSkill('naman')) return -1;
-								if(get.attitude(target,player)<0||event.player.hp<=1){
+								if(get.attitude(target,player)<0||event.player.hp<=1&&get.damageEffect(target,player,event.player)<get.damageEffect(player,target,event.player)){
 									return get.order(card);
 								}
 								return -1;
 							}
 							else{
 								if(target.hasSkill('naman')) return -1;
-								if(get.attitude(player,target)<0||event.player.hp<=1){
+								if(get.attitude(player,target)<0||event.player.hp<=1&&get.damageEffect(target,player,event.player)>get.damageEffect(player,target,event.player)){
 									return get.order(card);
 								}
 								return -1;
@@ -1122,38 +1205,34 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 						}
 					}
 					"step 3"
-					if(event.target.isDead()||event.player.isDead()){
-						event.finish();
-					}
-					else{
-						if(result.bool){
-							event.shaRequired--;
-							if(event.turn==target){
-								if(result.cards) event.targetCards.addArray(result.cards);
-								if(event.shaRequired>0) event.goto(2);
-								else{
-									event.turn=player;
-									event.goto(1);
-								}
-							}
+					if(result.bool){
+						event.shaRequired--;
+						if(event.turn==target){
+							if(result.cards) event.targetCards.addArray(result.cards);
+							if(event.shaRequired>0) event.goto(2);
 							else{
-								if(result.cards) event.playerCards.addArray(result.cards);
-								if(event.shaRequired>0) event.goto(2);
-								else{
-									event.turn=target;
-									event.goto(1);
-								}
+								event.turn=player;
+								event.goto(1);
 							}
 						}
 						else{
-							if(event.turn==target){
-								target.damage(event.baseDamage+event.extraDamage);
-							}
+							if(result.cards) event.playerCards.addArray(result.cards);
+							if(event.shaRequired>0) event.goto(2);
 							else{
-								player.damage(target,event.baseDamage+event.extraDamage);
+								event.turn=target;
+								event.goto(1);
 							}
 						}
 					}
+					else{
+						if(event.turn==target){
+							target.damage();
+						}
+						else{
+							player.damage(target);
+						}
+					}
+					event._result={};
 				},
 				ai:{
 					wuxie:function(target,card,player,viewer){
@@ -1215,7 +1294,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				},
 				filterTarget:function(card,player,target){
 					if(player==target) return false;
-					return target.countGainableCards(player,get.is.single()?'he':'hej')>0;
+					return target.hasCard(card=>lib.filter.canBeGained(card,target,player),get.is.single()?'he':'hej');
 				},
 				content:function(){
 					var position=get.is.single()?'he':'hej';
@@ -1236,27 +1315,47 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					},
 					result:{
 						target:function(player,target){
-							if(get.attitude(player,target)<=0) return (target.countCards('he',function(card){
-								return get.value(card,target)>0&&card!=target.getEquip('jinhe');
-							})>0)?-1.5:1.5;
-							return (target.countCards('ej',function(card){
-								if(get.position(card)=='e') return get.value(card,target)<=0;
-								var cardj=card.viewAs?{name:card.viewAs}:card;
-								return get.effect(target,cardj,target,player)<0;
-							})>0)?1.5:-1.5;
-						},
-						player:function(player,target){
-							if(get.attitude(player,target)<0&&!target.countCards('he',function(card){
-								return get.value(card,target)>0&&card!=target.getEquip('jinhe');
-							})){
-								return 0;
-							}
-							if(get.attitude(player,target)>1){
-								return (target.countCards('ej',function(card){
-									if(get.position(card)=='e') return get.value(card,target)<=0;
+							const hs=target.getGainableCards(player,'h');
+							const es=target.getGainableCards(player,'e');
+							const js=target.getGainableCards(player,'j');
+							
+							if(get.attitude(player,target)<=0){
+								if(hs.length>0) return -1.5;
+								return (es.some(card=>{
+									return get.value(card,target)>0&&card!=target.getEquip('jinhe');
+								})||js.some(card=>{
 									var cardj=card.viewAs?{name:card.viewAs}:card;
 									return get.effect(target,cardj,target,player)<0;
-								})>0)?1.5:-1.5;
+								}))?-1.5:1.5;
+							}
+							return (es.some(card=>{
+								return get.value(card,target)<=0;
+							})||js.some(card=>{
+								var cardj=card.viewAs?{name:card.viewAs}:card;
+								return get.effect(target,cardj,target,player)<0;
+							}))?1.5:-1.5;
+						},
+						player:function(player,target){
+							const hs=target.getGainableCards(player,'h');
+							const es=target.getGainableCards(player,'e');
+							const js=target.getGainableCards(player,'j');
+							
+							const att=get.attitude(player,target);
+							if(att<0){
+								if(!hs.length&&!es.some(card=>{
+									return get.value(card,target)>0&&card!=target.getEquip('jinhe');
+								})&&!js.some(card=>{
+									var cardj=card.viewAs?{name:card.viewAs}:card;
+									return get.effect(target,cardj,target,player)<0;
+								})) return 0;
+							}
+							else if(att>1){
+								return (es.some(card=>{
+									return get.value(card,target)<=0;
+								})||js.some(card=>{
+									var cardj=card.viewAs?{name:card.viewAs}:card;
+									return get.effect(target,cardj,target,player)<0;
+								}))?1.5:0;
 							}
 							return 1;
 						}
@@ -1275,28 +1374,52 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 						value:9
 					},
 					result:{
-						target:function(player,target){
-							if(get.attitude(player,target)<=0) return (target.countCards('he',function(card){
-								return get.value(card,target)>0&&card!=target.getEquip('jinhe');
-							})>0)?-1.5:1.5;
-							return (target.countCards('ej',function(card){
-								if(get.position(card)=='e') return get.value(card,target)<=0;
-								var cardj=card.viewAs?{name:card.viewAs}:card;
-								return get.effect(target,cardj,target,player)<0;
-							})>0)?1.5:-1.5;
-						},
-						player:function(player,target){
-							if(get.attitude(player,target)<0&&!target.countCards('he',function(card){
-								return get.value(card,target)>0&&card!=target.getEquip('jinhe');
-							})){
-								return 0;
-							}
-							if(get.attitude(player,target)>1){
-								return (target.countCards('ej',function(card){
-									if(get.position(card)=='e') return get.value(card,target)<=0;
+						target:function(player,target,card){
+							let position='hej';
+							if(card&&card.position) position=card.position;
+							const hs=position.includes('h')?target.getGainableCards(player,'h'):[];
+							const es=position.includes('e')?target.getGainableCards(player,'e'):[];
+							const js=position.includes('j')?target.getGainableCards(player,'j'):[];
+							
+							if(get.attitude(player,target)<=0){
+								if(hs.length>0) return -1.5;
+								return (es.some(card=>{
+									return get.value(card,target)>0&&card!=target.getEquip('jinhe');
+								})||js.some(card=>{
 									var cardj=card.viewAs?{name:card.viewAs}:card;
 									return get.effect(target,cardj,target,player)<0;
-								})>0)?1.5:-1.5;
+								}))?-1.5:1.5;
+							}
+							return (es.some(card=>{
+								return get.value(card,target)<=0;
+							})||js.some(card=>{
+								var cardj=card.viewAs?{name:card.viewAs}:card;
+								return get.effect(target,cardj,target,player)<0;
+							}))?1.5:-1.5;
+						},
+						player:function(player,target,card){
+							let position='hej';
+							if(card&&card.position) position=card.position;
+							const hs=position.includes('h')?target.getGainableCards(player,'h'):[];
+							const es=position.includes('e')?target.getGainableCards(player,'e'):[];
+							const js=position.includes('j')?target.getGainableCards(player,'j'):[];
+							
+							const att=get.attitude(player,target);
+							if(att<0){
+								if(!hs.length&&!es.some(card=>{
+									return get.value(card,target)>0&&card!=target.getEquip('jinhe');
+								})&&!js.some(card=>{
+									var cardj=card.viewAs?{name:card.viewAs}:card;
+									return get.effect(target,cardj,target,player)<0;
+								})) return 0;
+							}
+							else if(att>1){
+								return (es.some(card=>{
+									return get.value(card,target)<=0;
+								})||js.some(card=>{
+									var cardj=card.viewAs?{name:card.viewAs}:card;
+									return get.effect(target,cardj,target,player)<0;
+								}))?1.5:0;
 							}
 							return 1;
 						}
@@ -1315,28 +1438,17 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 						value:9
 					},
 					result:{
-						target:function(player,target){
-							if(get.attitude(player,target)<=0) return (target.countCards('he',function(card){
-								return get.value(card,target)>0&&card!=target.getEquip('jinhe');
-							})>0)?-1.5:1.5;
-							return (target.countCards('e',function(card){
-								return get.value(card,target)<=0;
-							})>0)?1.5:-1.5;
+						target:function(player,target,card,isLink){
+							return lib.card.shunshou_copy.ai.result.target(player,target,{
+								name:'shunshou_copy',
+								position:'he',
+							},isLink)
 						},
-						player:function(player,target){
-							if(get.attitude(player,target)<0&&!target.countCards('he',function(card){
-								return get.value(card,target)>0&&card!=target.getEquip('jinhe');
-							})){
-								return 0;
-							}
-							if(get.attitude(player,target)>1){
-								return (target.countCards('ej',function(card){
-									if(get.position(card)=='e') return get.value(card,target)<=0;
-									var cardj=card.viewAs?{name:card.viewAs}:card;
-									return get.effect(target,cardj,target,player)<0;
-								})>0)?1.5:-1.5;
-							}
-							return 1;
+						player:function(player,target,card,isLink){
+							return lib.card.shunshou_copy.ai.result.player(player,target,{
+								name:'shunshou_copy',
+								position:'he',
+							},isLink)
 						}
 					},
 					tag:{
@@ -1356,7 +1468,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				},
 				filterTarget:function(card,player,target){
 					if(player==target) return false;
-					return target.countDiscardableCards(player,get.is.single()?'he':'hej');
+					return target.hasCard(card=>lib.filter.canBeDiscarded(card,target,player),get.is.single()?'he':'hej');
 				},
 				defaultYingbianEffect:'add',
 				content:function(){
@@ -1380,6 +1492,11 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					player.discardPlayerCard(target,pos,true,'visible');
 				},
 				ai:{
+					wuxie:(target,card,player,viewer,status)=>{
+						if(status*get.attitude(viewer,player)>0&&!player.isMad() || target.hp>2&&!target.hasCard(i=>{
+							return get.value(i,target)>3+Math.min(5,target.hp);
+						},'e')&&target.countCards('h')*_status.event.getRand('guohe_wuxie')>1.57) return 0;
+					},
 					basic:{
 						order:9,
 						useful:5,
@@ -1394,30 +1511,38 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					},
 					result:{
 						target:function(player,target){
-							var att=get.attitude(player,target);
-							var nh=target.countCards('h');
+							const att=get.attitude(player,target);
+							const hs=target.getDiscardableCards(player,'h');
+							const es=target.getDiscardableCards(player,'e');
+							const js=target.getDiscardableCards(player,'j');
+							if(!hs.length&&!es.length&&!js.length) return 0;
 							if(att>0){
-								if(target.countCards('j',function(card){
-									var cardj=card.viewAs?{name:card.viewAs}:card;
+								if(js.some(card=>{
+									const cardj=card.viewAs?{name:card.viewAs}:card;
 									return get.effect(target,cardj,target,player)<0;
-								})>0) return 3;
-								if(target.getEquip('baiyin')&&target.isDamaged()&&
+								})) return 3;
+								if(target.isDamaged()&&es.some(card=>card.name=='baiyin')&&
 									get.recoverEffect(target,player,player)>0){
 									if(target.hp==1&&!target.hujia) return 1.6;
 								}
-								if(target.countCards('e',function(card){
-									if(get.position(card)=='e') return get.value(card,target)<0;
-								})>0) return 1;
+								if(es.some(card=>{
+									return get.value(card,target)<0;
+								})) return 1;
+								return -1.5;
 							}
-							var es=target.getCards('e');
-							var noe=(es.length==0||target.hasSkillTag('noe'));
-							var noe2=(es.filter(function(esx){
-								return get.value(esx,target)>0;
-							}).length==0);
-							var noh=(nh==0||target.hasSkillTag('noh'));
-							if(noh&&(noe||noe2)) return 0;
-							if(att<=0&&!target.countCards('he')) return 1.5;
-							return -1.5;
+							else{
+								const noh=(hs.length==0||target.hasSkillTag('noh'));
+								const noe=(es.length==0||target.hasSkillTag('noe'));
+								const noe2=(noe||!es.some(card=>{
+									return get.value(card,target)>0;
+								}));
+								const noj=(js.length==0||!js.some(card=>{
+									const cardj=card.viewAs?{name:card.viewAs}:card;
+									return get.effect(target,cardj,target,player)<0;
+								}))
+								if(noh&&noe2&&noj) return 1.5;
+								return -1.5;
+							}
 						},
 					},
 					tag:{
@@ -1434,31 +1559,41 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 						value:5,
 					},
 					result:{
-						target:function(player,target){
-							var att=get.attitude(player,target);
-							var nh=target.countCards('h');
+						target:function(player,target,card){
+							let position='hej';
+							if(card&&card.position) position=card.position;
+							const att=get.attitude(player,target);
+							const hs=position.includes('h')?target.getDiscardableCards(player,'h'):[];
+							const es=position.includes('e')?target.getDiscardableCards(player,'e'):[];
+							const js=position.includes('j')?target.getDiscardableCards(player,'j'):[];
+							if(!hs.length&&!es.length&&!js.length) return 0;
 							if(att>0){
-								if(target.countCards('j',function(card){
-									var cardj=card.viewAs?{name:card.viewAs}:card;
+								if(js.some(card=>{
+									const cardj=card.viewAs?{name:card.viewAs}:card;
 									return get.effect(target,cardj,target,player)<0;
-								})>0) return 3;
-								if(target.getEquip('baiyin')&&target.isDamaged()&&
+								})) return 3;
+								if(target.isDamaged()&&es.some(card=>card.name=='baiyin')&&
 									get.recoverEffect(target,player,player)>0){
 									if(target.hp==1&&!target.hujia) return 1.6;
 								}
-								if(target.countCards('e',function(card){
-									if(get.position(card)=='e') return get.value(card,target)<0;
-								})>0) return 1;
+								if(es.some(card=>{
+									return get.value(card,target)<0;
+								})) return 1;
+								return -1.5;
 							}
-							var es=target.getCards('e');
-							var noe=(es.length==0||target.hasSkillTag('noe'));
-							var noe2=(es.filter(function(esx){
-								return get.value(esx,target)>0;
-							}).length==0);
-							var noh=(nh==0||target.hasSkillTag('noh'));
-							if(noh&&(noe||noe2)) return 0;
-							if(att<=0&&!target.countCards('he')) return 1.5;
-							return -1.5;
+							else{
+								const noh=(hs.length==0||target.hasSkillTag('noh'));
+								const noe=(es.length==0||target.hasSkillTag('noe'));
+								const noe2=(noe||!es.some(card=>{
+									return get.value(card,target)>0;
+								}));
+								const noj=(js.length==0||!js.some(card=>{
+									const cardj=card.viewAs?{name:card.viewAs}:card;
+									return get.effect(target,cardj,target,player)<0;
+								}))
+								if(noh&&noe2&&noj) return 1.5;
+								return -1.5;
+							}
 						},
 					},
 					tag:{
@@ -1475,27 +1610,11 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 						value:5,
 					},
 					result:{
-						target:function(player,target){
-							var att=get.attitude(player,target);
-							var nh=target.countCards('h');
-							if(att>0){
-								if(target.getEquip('baiyin')&&target.isDamaged()&&
-									get.recoverEffect(target,player,player)>0){
-									if(target.hp==1&&!target.hujia) return 1.6;
-								}
-								if(target.countCards('e',function(card){
-									if(get.position(card)=='e') return get.value(card,target)<0;
-								})>0) return 1;
-							}
-							var es=target.getCards('e');
-							var noe=(es.length==0||target.hasSkillTag('noe'));
-							var noe2=(es.filter(function(esx){
-								return get.value(esx,target)>0;
-							}).length==0);
-							var noh=(nh==0||target.hasSkillTag('noh'));
-							if(noh&&(noe||noe2)) return 0;
-							if(att<=0&&!target.countCards('he')) return 1.5;
-							return -1.5;
+						target:function(player,target,card,isLink){
+							return lib.card.guohe_copy.ai.result.target(player,target,{
+								name:'guohe_copy',
+								position:'he',
+							},isLink)
 						},
 					},
 					tag:{
@@ -1907,7 +2026,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				equipSkill:false,
 				ruleSkill:true,
 				filter:function(event){
-					return event.nature=='ice'&&event.notLink()&&event.player.getCards('he').length>0;
+					return event.hasNature('ice')&&event.notLink()&&event.player.getCards('he').length>0;
 				},
 			},
 			renwang_skill:{
@@ -2100,8 +2219,14 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				audio:true,
 				prompt:'将两张手牌当杀使用或打出',
 				check:function(card){
-					if(card.name=='sha') return 0;
-					return 5-get.value(card)
+					let player=_status.event.player;
+					if(player.hasCard(function(card){
+						return get.name(card)=='sha';
+					})) return 0;
+					if(_status.event&&_status.event.name=='chooseToRespond'&&player.hp<3&&!player.countCards('hs',function(card){
+						return get.name(card)!='tao'&&get.name(card)!='jiu';
+					})) return (player.hp>1?10:8)-get.value(card);
+					return Math.max(5,8-0.7*player.hp)-get.value(card);
 				},
 				ai:{
 					respondSha:true,
@@ -2136,10 +2261,9 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					next.set('ai',function(card){
 						var evt=_status.event.getTrigger();
 						if(get.attitude(evt.player,evt.target)<0){
-							if(evt.baseDamage+evt.extraDamage>=Math.min(2,evt.target.hp)){
-								return 8-get.value(card)
-							}
-							return 5-get.value(card)
+							if(player.needsToDiscard()) return 15-get.value(card);
+							if(evt.baseDamage+evt.extraDamage>=Math.min(2,evt.target.hp)) return 8-get.value(card);
+							return 5-get.value(card);
 						}
 						return -1;
 					});
@@ -3126,10 +3250,10 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 			renwang_skill:'仁王盾',
 			hanbing_info:'当你因执行【杀】的效果而造成伤害时，若目标角色有能被弃置的牌，则你可以防止此伤害，然后依次弃置目标角色的两张牌。',
 			hanbing_skill_info:'当你因执行【杀】的效果而造成伤害时，若目标角色有能被弃置的牌，则你可以防止此伤害，然后依次弃置目标角色的两张牌。',
-			renwang_info:'锁定技，黑色【杀】对你无效',
-			renwang_skill_info:'锁定技，黑色【杀】对你无效',
+			renwang_info:'锁定技，黑色【杀】对你无效。',
+			renwang_skill_info:'锁定技，黑色【杀】对你无效。',
 			sha_info:'出牌阶段，对你攻击范围内的一名角色使用。其须使用一张【闪】，否则你对其造成1点伤害。',
-			shan_info:'抵消一张【杀】',
+			shan_info:'抵消一张【杀】。',
 			tao_info:'①出牌阶段，对自己使用，目标角色回复1点体力。②当有角色处于濒死状态时，对该角色使用。目标角色回复1点体力。',
 			bagua_info:'当你需要使用或打出一张【闪】时，你可以进行判定。若结果为红色，则你视为使用或打出一张【闪】。',
 			bagua_skill_info:'当你需要使用或打出一张【闪】时，你可以进行判定。若结果为红色，则你视为使用或打出一张【闪】。',

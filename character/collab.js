@@ -490,7 +490,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				audio:2,
 				trigger:{player:'damageBegin4'},
 				filter:function(event){
-					return event.nature=='fire';
+					return event.hasNature('fire');
 				},
 				forced:true,
 				content:function(){
@@ -1025,7 +1025,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 							content:function(){
 								var num=lib.skill.ruyijingubang_skill_backup.num;
 								player.storage.ruyijingubang_skill=num;
-								var card=player.getEquips(1);
+								var cards=player.getEquips(1);
 								for(var card of cards){
 									if(card&&card.name=='ruyijingubang'){
 										card.storage.ruyijingubang_skill=num;
@@ -1038,9 +1038,6 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 					},
 				},
 				mod:{
-					attackRange:function(player,range){
-						if(player.storage.ruyijingubang_skill) return range-3+player.storage.ruyijingubang_skill;
-					},
 					cardUsable:function(card,player,num){
 						if(player.storage.ruyijingubang_skill==1&&card.name=='sha') return Infinity;
 					},
@@ -1159,8 +1156,12 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				ai:{
 					effect:{
 						player:function(card,player,target){
-							if(ui.selected.targets.length) return;
-							if(player!=target&&get.type2(card)=='trick') return [1,0,1,-2];
+							if(player!==target&&get.type2(card)==='trick'){
+								let tars=[target];
+								if(ui.selected.targets.length) tars.addArray(ui.selected.targets.filter(i=>i!==player&&i!==target));
+								if(tars.length<2) return [1,0,1,-2];
+								return [1,0,1,-2/tars.length];
+							}
 						},
 					},
 				},
@@ -1516,7 +1517,12 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 				subtype:'equip1',
 				skills:['ruyijingubang_skill','ruyijingubang_effect'],
 				equipDelay:false,
-				distance:{attackFrom:-2},
+				distance:{
+					attackFrom:-2,
+					attackRange:(card,player)=>{
+						return (player.storage.ruyijingubang_skill||3);
+					}
+				},
 				onEquip:function(){
 					if(!card.storage.ruyijingubang_skill) card.storage.ruyijingubang_skill=3;
 					player.storage.ruyijingubang_skill=card.storage.ruyijingubang_skill;
@@ -1531,25 +1537,30 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 		},
 		translate:{
 			old_lingju:'SP灵雎',
+			old_lingju_prefix:'SP',
 			fenxin_old:'焚心',
 			fenxin_old_info:'限定技，当你杀死一名非主公角色时，你可以与其交换未翻开的身份牌。（你的身份为主公时不能发动此技能）',
 			sp_fuwan:'SP伏完',
+			sp_fuwan_prefix:'SP',
 			spfengyin:'奉印',
 			spfengyin_info:'其他角色的回合开始时，若其体力值不少于你，你可以交给其一张【杀】，令其跳过出牌阶段和弃牌阶段。',
 			spchizhong:'持重',
 			spchizhong_info:'锁定技，你的手牌上限等于体力上限；其他角色死亡时，你加1点体力上限。',
 			sp_fuhuanghou:'SP伏寿',
+			sp_fuhuanghou_prefix:'SP',
 			spcangni:'藏匿',
 			spcangni_info:'弃牌阶段开始时，你可以回复1点体力或摸两张牌，然后将你的武将牌翻面；其他角色的回合内，当你获得（每回合限一次）/失去一次牌时，若你的武将牌背面朝上，你可以令该角色摸/弃置一张牌。',
 			spmixin:'密信',
 			spmixin_info:'出牌阶段限一次，你可以将一张手牌交给一名其他角色，该角色须对你选择的另一名角色使用一张无距离限制的【杀】，否则你选择的角色观看其手牌并获得其中一张。',
 			sp_jiben:'SP吉本',
+			sp_jiben_prefix:'SP',
 			spduanzhi:'断指',
 			spduanzhi_info:'当你成为其他角色使用的牌的目标后，你可以弃置其至多两张牌，然后失去1点体力。',
 			spduyi:'毒医',
 			spduyi2:'毒医',
 			spduyi_info:'出牌阶段限一次，你可以亮出牌堆顶的一张牌并交给一名角色，若此牌为黑色，该角色不能使用或打出手牌，直到回到结束。',
 			sp_mushun:'SP穆顺',
+			sp_mushun_prefix:'SP',
 			libai:'李白',
 			dclbjiuxian:'酒仙',
 			dclbjiuxian_info:'①你可以将额定目标数大于1的锦囊牌当做【酒】使用。②你使用【酒】无次数限制。',
@@ -1577,7 +1588,7 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			dcsitian_info:'出牌阶段，你可以弃置两张颜色不同的手牌。系统从所有天气中随机选择两个，你观看这些天气并选择一个执行。<br><li>烈日：你对其他角色依次造成1点火属性伤害。<br><li>雷电：你令其他角色各进行一次判定。若结果为♠2~9，则其受到3点无来源雷属性伤害。<br><li>大浪：你弃置其他角色装备区内的所有牌（装备区内没有牌的角色改为失去1点体力）。<br><li>暴雨：你弃置一名角色的所有手牌。若其没有手牌，则改为令其失去1点体力。<br><li>大雾：你令所有其他角色获得如下效果：当其使用下一张锦囊牌时，取消之。',
 			sunyang:'孙杨',
 			clbshuijian:'水箭',
-			clbshuijian_info:'摸牌阶段开始时，你可以令额定摸牌数+X（X为你装备区内牌数的一半+1，且向下取整）',
+			clbshuijian_info:'摸牌阶段开始时，你可以令额定摸牌数+X（X为你装备区内牌数的一半+1，且向下取整）。',
 			yeshiwen:'叶诗文',
 			clbjisu:'急速',
 			clbjisu_info:'判定阶段开始前，你可以跳过本回合的判定阶段和摸牌阶段，视为对一名其他角色使用一张【杀】。',
@@ -1593,15 +1604,15 @@ game.import('character',function(lib,game,ui,get,ai,_status){
 			dcbianzhuang:'变装',
 			dcbianzhuang_info:'①出牌阶段限一次，你可以从系统随机选择的两个技能中获得一个，并视为使用一张【杀】（无距离次数限制），然后失去以此法获得的技能。②当你使用装备牌后，你清空此技能的发动次数记录。③当你发动〖变装①〗后，若你发动〖变装①〗的次数大于2，则你将武将牌变更为诸葛亮，并将系统选择的技能数改为三个。',
 			dc_caocao:'经典曹操',
-			dc_caocao_ab:'曹操',
+			dc_caocao_prefix:'经典',
 			dcjianxiong:'奸雄',
 			dcjianxiong_info:'当你受到伤害后，你可以摸一张牌并获得对你造成伤害的牌，然后你令此技能摸牌数+1（至多为5）。',
 			dc_liubei:'经典刘备',
-			dc_liubei_ab:'刘备',
+			dc_liubei_prefix:'经典',
 			dcrende:'仁德',
 			dcrende_info:'出牌阶段每名角色限一次。你可以获得一名其他角色两张手牌，然后视为使用一张基本牌。',
 			dc_sunquan:'经典孙权',
-			dc_sunquan_ab:'孙权',
+			dc_sunquan_prefix:'经典',
 			dczhiheng:'制衡',
 			dczhiheng_info:'①出牌阶段限一次。你可以弃置任意张牌并摸等量的牌，若你在发动〖制衡〗时弃置了所有手牌，则你多摸一张牌。②每回合每名角色限一次。当你对其他角色造成伤害后，你令〖制衡①〗于此回合发动次数上限+1。',
 			

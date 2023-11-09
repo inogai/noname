@@ -154,7 +154,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					'step 1'
 					if(result.bool){
 						target.showCards(result.cards);
-						if(get.suit(card)!=get.suit(result.cards[0])) target.damage(event.baseDamage||1);
+						if(get.suit(card)!=get.suit(result.cards[0])) target.damage();
 					}
 				},
 				ai:{
@@ -239,7 +239,11 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				type:'equip',
 				subtype:'equip5',
 				loseDelay:false,
-				global:'tianjitu_skill',
+				skills:['tianjitu_skill'],
+				onLose:function(){
+					player.addTempSkill('tianjitu_skill_lose')
+				},
+				loseDelay:false,
 				ai:{
 					value:function(card,player){
 						if(player.countCards('h')>3||get.position(card)!='e') return 0.5;
@@ -303,7 +307,7 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 				equipSkill:true,
 				trigger:{player:'useCard1'},
 				filter:function(event,player){
-					return (event.card.name=='sha'&&event.card.nature&&event.card.nature!='kami');
+					return (event.card.name=='sha'&&lib.linked.some(n=>n!='kami'&&game.hasNature(event.card,n)));
 				},
 				audio:true,
 				direct:true,
@@ -311,15 +315,15 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 					'step 0'
 					var list=lib.linked.slice(0);
 					list.remove('kami');
-					list.remove(trigger.card.nature);
+					list.removeArray(get.natureList(trigger.card));
 					list.push('cancel2');
 					player.chooseControl(list).set('prompt',get.prompt('wuxinghelingshan_skill')).set('prompt2','将'+get.translation(trigger.card)+'转换为以下属性之一');
 					'step 1'
 					if(result.control!='cancel2'){
 						player.logSkill('wuxinghelingshan_skill');
-						trigger.card.nature=result.control;
 						player.popup(get.translation(result.control)+'杀',result.control);
-						game.log(trigger.card,'被转为了','#y'+get.translation(result.control),'属性')
+						game.log(trigger.card,'被转为了','#y'+get.translation(result.control),'属性');
+						game.setNature(trigger.card,result.control);
 					}
 				}
 			},
@@ -374,14 +378,33 @@ game.import('card',function(lib,game,ui,get,ai,_status){
 			},
 			tianjitu_skill:{
 				audio:true,
-				trigger:{player:['equipBegin','loseBegin']},
+				trigger:{player:'equipAfter'},
 				forced:true,
 				equipSkill:true,
-				filter:(event,player,name)=>name=='equipBegin'?event.card.name=='tianjitu'&&player.hasCard(card=>card!=event.card):event.cards.some(value=>get.position(value)=='e'&&value.name=='tianjitu')&&player.countCards('h')<5,
+				filter:(event,player)=>event.card.name=='tianjitu'&&player.hasCard(card=>card!=event.card,'he'),
 				content:()=>{
-					if(event.triggername=='loseBegin') player.drawTo(5);
-					else player.chooseToDiscard(true,card=>card!=_status.event.getTrigger().card,'he');
-				}
+					player.chooseToDiscard(true,card=>card!=_status.event.getTrigger().card,'he');
+				},
+				subSkill:{
+					lose:{
+						audio:'tianjitu_skill',
+						forced:true,
+						charlotte:true,
+						equipSkill:true,
+						trigger:{
+							player:'loseAfter',
+							global:['equipAfter','addJudgeAfter','gainAfter','loseAsyncAfter','addToExpansionAfter'],
+						},
+						filter:(event,player)=>{
+							if(player.countCards('h')>=5) return false;
+							var evt=event.getl(player);
+							return evt&&evt.es.some(card=>card.name=='tianjitu')
+						},
+						content:function(){
+							player.drawTo(5);
+						},
+					},
+				},
 			},
 			taigongyinfu_skill:{
 				equipSkill:true,
