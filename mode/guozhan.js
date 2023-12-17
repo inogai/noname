@@ -14375,15 +14375,14 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 							// if(num==1) return lib.character[this.name2][1];
 							return lib.character[this.name1][1];
 						},
-//						wontYe:function(group){
-//							if(!group) group=lib.character[this.name1][1];
-//							if(_status.yeidentity&&_status.yeidentity.contains(group)) return false;
-//							if(get.zhu(this,null,true)) return true;
-//							var num=3,total=get.population();
-//							if(total<6) num=1;
-//							else if(total<8) num=2;
-//							return get.totalPopulation(group)+1<=num;
-//						},
+						wontYe:function(group){
+							if(!group) group=lib.character[this.name1][1];
+							// if(_status.yeidentity&&_status.yeidentity.contains(group)) return false;
+							if(get.zhu(this,null,true)) return true;
+							var num=3,total=get.population();
+							num = Math.floor(total / 2);
+							return get.totalPopulation(group)+1<=num;
+						},
 					}
 					for(var i of game.players){
 						for(var j in eltp) i[j]=eltp[j];
