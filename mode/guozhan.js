@@ -14462,7 +14462,38 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 						if(get.is.double(button.link)) return get.is.double(button.link,true).contains(lib.character[ui.selected.buttons[0].link][1]);
 						return (lib.character[button.link][1]==lib.character[ui.selected.buttons[0].link][1]);
 					};
-					list.randomSort();
+
+					let groupList=['wei','shu','wu','qun'];
+					function myRandomRemove(arr) {
+						let group=groupList.randomGet();
+						let i = 0;
+						while (i++ < 100) {
+							let idx = Math.floor(Math.random()*arr.length);
+							let name = arr[idx];
+							let grp = lib.character[name][1];
+							if ((!groupList.contains(grp)) || (grp == group))  {
+								arr.splice(idx,1);
+								return name;
+							}
+						}
+						return arr.randomRemove();
+					}
+					
+					function myRandomSort(arr) {
+						let list=[];
+						while(arr.length){
+							list.push(myRandomRemove(arr));
+						}
+						for(let i=0;i<list.length;i++){
+							arr.push(list[i]);
+						}
+						return arr;
+					};
+					alert(list);
+					myRandomSort(list);
+					alert(list);
+					// list.randomSort();
+
 					for(var i=0;i<game.players.length;i++){
 						list2.push([game.players[i],['选择角色259',[game.getCharacterChoice(list,16),'character']],2,
 						true,function(){return Math.random()},filterButton]);
@@ -14472,8 +14503,6 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 					}).set('switchToAuto',function(){
 						_status.event.result='ai';
 					}).set('processAI',function(){
-						let groupList=['wei','shu','wu','qun'];
-						let decidedGroup=groupList.randomGet();
 						var buttons=_status.event.dialog.buttons;
 						var filterChoice=function(name1,name2){
 							if(_status.separatism) return true;
@@ -14494,8 +14523,6 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 						};
 						filterChoice=function(name1,name2){
 							if(get.is.double(name1)) return false;
-							var group1=lib.character[name1][1];
-							if(groupList.contains(group1)&&group1!=decidedGroup) return false;
 							return true;
 						};
 						for(var i=0;i<buttons.length-1;i++){
@@ -14529,7 +14556,8 @@ game.import('mode',function(lib,game,ui,get,ai,_status){
 						if(result[i]=='ai'||!result[i].links||result[i].links.length<1){
 							if(sort){
 								sort=false;
-								event.list.randomSort();
+								myRandomSort(event.list);
+								// event.list.randomSort();
 							}
 							result[i]=[event.list.shift()];
 							var group=lib.character[result[i][0]][1];
