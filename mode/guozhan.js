@@ -19440,14 +19440,17 @@ export default () => {
 					_status.yeidentity = [];
 					event.list = list.slice(0);
 					var list2 = [];
-					var num;
-					if (lib.configOL.number * 6 > list.length) {
-						num = 5;
-					} else if (lib.configOL.number * 7 > list.length) {
-						num = 6;
-					} else {
-						num = 7;
-					}
+					// BEGIN: num
+					// var num;
+					// if (lib.configOL.number * 6 > list.length) {
+					// 	num = 5;
+					// } else if (lib.configOL.number * 7 > list.length) {
+					// 	num = 6;
+					// } else {
+					// 	num = 7;
+					// }
+					num = 16;
+					// END: num
 					var filterButton = function (button) {
 						if (ui.dialog) {
 							if (ui.dialog.buttons.length <= 10) {
