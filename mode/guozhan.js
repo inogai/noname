@@ -19476,16 +19476,22 @@ export default () => {
 							var group1 = lib.character[name1][1];
 							var group2 = lib.character[name2][1];
 							var doublex = get.is.double(name1, true);
-							if (doublex) {
-								var double = get.is.double(name2, true);
-								if (double) return doublex.some(group => double.includes(group));
-								return doublex.includes(group2);
-							} else {
-								if (group1 == "ye") return group2 != "ye";
-								var double = get.is.double(name2, true);
-								if (double) return double.includes(group1);
-								return group1 == group2;
-							}
+							
+							if (doublex) return false;
+							if (group1 == "ye") return false;
+
+							return true;
+
+							// if (doublex) {
+							// 	var double = get.is.double(name2, true);
+							// 	if (double) return doublex.some(group => double.includes(group));
+							// 	return doublex.includes(group2);
+							// } else {
+							// 	if (group1 == "ye") return group2 != "ye";
+							// 	var double = get.is.double(name2, true);
+							// 	if (double) return double.includes(group1);
+							// 	return group1 == group2;
+							// }
 						};
 						if (!ui.selected.buttons.length) {
 							return ui.dialog.buttons.some(but => {
@@ -19522,16 +19528,21 @@ export default () => {
 								var group1 = lib.character[name1][1];
 								var group2 = lib.character[name2][1];
 								var doublex = get.is.double(name1, true);
-								if (doublex) {
-									var double = get.is.double(name2, true);
-									if (double) return doublex.some(group => double.includes(group));
-									return doublex.includes(group2);
-								} else {
-									if (group1 == "ye") return group2 != "ye";
-									var double = get.is.double(name2, true);
-									if (double) return double.includes(group1);
-									return group1 == group2;
-								}
+							
+								if (doublex) return false;
+								if (group1 == "ye") return false;
+
+								return true;
+								// if (doublex) {
+								// 	var double = get.is.double(name2, true);
+								// 	if (double) return doublex.some(group => double.includes(group));
+								// 	return doublex.includes(group2);
+								// } else {
+								// 	if (group1 == "ye") return group2 != "ye";
+								// 	var double = get.is.double(name2, true);
+								// 	if (double) return double.includes(group1);
+								// 	return group1 == group2;
+								// }
 							};
 							for (var i = 0; i < buttons.length - 1; i++) {
 								for (var j = i + 1; j < buttons.length; j++) {
