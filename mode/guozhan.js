@@ -19425,12 +19425,17 @@ export default () => {
 						}
 					});
 					var list = [];
-					for (var i in lib.characterPack.mode_guozhan) {
-						if (i.indexOf("gz_shibing") == 0) continue;
-						if (get.is.jun(i)) continue;
-						if (lib.config.guozhan_banned && lib.config.guozhan_banned.includes(i)) continue;
-						list.push(i);
-					}
+					// BEGIN: 武将选项
+					// for (var i in lib.characterPack.mode_guozhan) {
+					// 	if (i.indexOf("gz_shibing") == 0) continue;
+					// 	if (get.is.jun(i)) continue;
+					// 	if (lib.config.guozhan_banned && lib.config.guozhan_banned.includes(i)) continue;
+					// 	list.push(i);
+					// }
+					list = get.charactersOL(function(i) {
+						return lib.character[i][4].contains('hiddenSkill');
+					});
+					// END: 武将选项
 					_status.characterlist = list.slice(0);
 					_status.yeidentity = [];
 					event.list = list.slice(0);
