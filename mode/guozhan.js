@@ -19501,7 +19501,38 @@ export default () => {
 						}
 						return filterChoice(ui.selected.buttons[0].link, button.link);
 					};
-					list.randomSort();
+					// BEGIN: random sort
+					// list.randomSort();
+					// 
+					let groupList= ['wei', 'shu', 'wu', 'qun'];
+					function myRandomRemove(arr) {
+						let group = groupList.randomGet();
+						let i = 0;
+						while (i++ < 100) {
+							let idx = Math.floor(Math.random() * arr.length);
+							let name = arr[idx];
+							let grp = lib.character[name][1];
+							if ((!groupList.contains(grp)) || (grp == group))  {
+								arr.splice(idx,1);
+								return name;
+							}
+						}
+						return arr.randomRemove();
+					}
+					
+					function myRandomSort(arr) {
+						let list = [];
+						while (arr.length) {
+							list.push(myRandomRemove(arr));
+						}
+						for (let i=0; i < list.length; i++) {
+							arr.push(list[i]);
+						}
+						return arr;
+					};
+
+					myRandomSort(list);
+					// END: random sort
 					for (var i = 0; i < game.players.length; i++) {
 						list2.push([
 							game.players[i],
