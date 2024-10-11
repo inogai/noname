@@ -22009,7 +22009,10 @@ export default () => {
 						return;
 					}
 					game.addVideo("showCharacter", this, num);
-					if (this.identity == "unknown" || ((num == 0 || num == 2) && lib.character[this.name1][1] == "ye")) {
+					// BEGIN: 副将不再决定身份
+					if (num == 0 || num == 2) {
+					// if (this.identity == "unknown" || ((num == 0 || num == 2) && lib.character[this.name1][1] == "ye")) {
+					// END: 副将不再决定身份
 						this.group = this.getGuozhanGroup(num);
 						if ((num == 0 || num == 2) && lib.character[this.name1][1] == "ye") {
 							this.identity = "ye";
