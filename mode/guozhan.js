@@ -18499,7 +18499,9 @@ export default () => {
 						player.line(target, "green");
 						var list = [];
 						if (target.getGuozhanGroup(0) == player.identity) list.push("明置" + get.translation(target.name1));
-						if (target.getGuozhanGroup(1) == player.identity) list.push("明置" + get.translation(target.name2));
+						// BEGIN: 不能以副将响应阵法技
+						// if (target.getGuozhanGroup(1) == player.identity) list.push("明置" + get.translation(target.name2));
+						// END: 不能以副将响应阵法技
 						if (list.length > 0) {
 							target
 								.chooseControl(list, "cancel2")
