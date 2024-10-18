@@ -22012,7 +22012,10 @@ export default () => {
 					}
 					game.addVideo("showCharacter", this, num);
 					if (this.identity == "unknown" || ((num == 0 || num == 2) && lib.character[this.name1][1] == "ye")) {
-						this.group = this.getGuozhanGroup(num);
+						// BEGIN: 始终使用主将的势力
+						this.group = this.getGuozhanGroup(0);
+						// this.group = this.getGuozhanGroup(num);
+						// END: 始终使用主将的势力
 						if ((num == 0 || num == 2) && lib.character[this.name1][1] == "ye") {
 							this.identity = "ye";
 							if (!this._ye) {
