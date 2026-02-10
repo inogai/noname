@@ -1,0 +1,10 @@
+# git
+.git
+.gitignore
+
+# 依赖
+node_modules
+
+# 产物
+dist
+output

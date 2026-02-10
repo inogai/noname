@@ -1,0 +1,29 @@
+# -------- 构建阶段 --------
+FROM node:lts-alpine AS builder
+
+# 安装 pnpm（轻量）
+RUN npm install -g pnpm@9
+
+WORKDIR /app
+
+# 只复制依赖定义文件（能最大化缓存利用率）
+COPY pnpm-lock.yaml package.json pnpm-workspace.yaml tsconfig.json ./
+COPY packages/server/package.json ./packages/server/
+
+# 安装依赖（包括 devDependencies 用于构建）
+RUN pnpm -F @noname/server install --frozen-lockfile
+
+# 使用 patch 过的 tsup.config.ts，来把 ws 打包进最终产物中
+COPY packages/server/ docker/tsup.config.ts ./packages/server/
+RUN pnpm -F @noname/server build
+
+# -------- 运行阶段 --------
+FROM node:lts-alpine AS runner
+
+WORKDIR /app
+
+COPY --from=builder /app/packages/server/dist/index.cjs ./index.cjs
+
+EXPOSE 8082
+
+CMD ["node", "index.cjs"]
