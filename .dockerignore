@@ -1,0 +1,5 @@
+.git
+.direnv
+node_modules
+dist
+output

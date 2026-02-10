@@ -1,11 +1,16 @@
 # Noname Inogai Patches
 
 本仓库维护了一系列针对 [Noname](https://github.com/libnoname/noname) (无名杀) 的自定义补丁。
-这些补丁主要涉及国战模式的增强与优化，旧版已经归档至 `inogai-24.10`, `inogai-23.12` 分支。
+这些补丁主要涉及国战模式的增强与优化。
+
+旧版基于 [raineggplant/noname:pwa](https://github.com/RainEggplant/noname) 已经
+归档至 `inogai-24.10`, `inogai-23.12` 分支。
 
 ## 项目信息
 
-- **上游项目**: [Noname (无名杀)](https://github.com/libnoname/noname)
+- **上游项目**:
+  - [Noname (无名杀)](https://github.com/libnoname/noname)
+  - [xiaochuan-z/noname:docker](https://github.com/xiaochun-z/noname/tree/docker)
 - **许可证**: GNU General Public License v3.0 or later (GPLv3+)
 
 ## 补丁清单
