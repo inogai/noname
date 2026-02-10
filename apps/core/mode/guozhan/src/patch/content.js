@@ -128,7 +128,10 @@ export const chooseCharacterContent = async (event, _trigger, _player) => {
 				}
 				// 仙人之兮列如麻
 				// @ts-expect-error 祖宗之法就是这么写的
-				else if (get.is.double(name1, true).removeArray(get.is.double(name2, true)).length == 0 || get.is.double(name2, true).removeArray(get.is.double(name1, true)).length == 0) {
+				else if (
+					get.is.double(name1, true).removeArray(get.is.double(name2, true)).length == 0 ||
+					get.is.double(name2, true).removeArray(get.is.double(name1, true)).length == 0
+				) {
 					const next = game.me
 						// @ts-expect-error 祖宗之法就是这么写的
 						.chooseControl(get.is.double(name2, true).filter(group => get.is.double(name1, true).includes(group)));
@@ -384,7 +387,10 @@ export const chooseCharacterContent = async (event, _trigger, _player) => {
 				}
 				if (!button.perfectPairs?.length) {
 					const perfectPairStr = perfectPairs.map(i => `[${get.translation(i.link)}]`).join("<br>");
-					const perfectPairNode = ui.create.caption(`<div class="text" data-nature=shenmm style="font-family: yuanli; font-size: 12px">${perfectPairStr}</div>`, button);
+					const perfectPairNode = ui.create.caption(
+						`<div class="text" data-nature=shenmm style="font-family: yuanli; font-size: 12px">${perfectPairStr}</div>`,
+						button
+					);
 					perfectPairNode.style.left = "1px";
 					perfectPairNode.style.bottom = "1px";
 					button.perfectPairs = perfectPairs;
@@ -582,25 +588,55 @@ export const chooseCharacterOLContent = async (event, _trigger, _player) => {
 		}
 	});
 
-	/** @type {Record<string, Character>} */
-	const pack = Reflect.get(lib.characterPack, "mode_guozhan");
-	const characterList = Object.keys(pack).filter(character => {
-		return !character.startsWith("gz_shibing") && !get.is.jun(character) && !lib.config.guozhan_banned?.includes(character);
+	// /** @type {Record<string, Character>} */
+	// const pack = Reflect.get(lib.characterPack, "mode_guozhan");
+	// const characterList = Object.keys(pack).filter(character => {
+	// 	return !character.startsWith("gz_shibing") && !get.is.jun(character) && !lib.config.guozhan_banned?.includes(character);
+	// });
+	const characterList = get.charactersOL(function (i) {
+		return lib.character[i][4].contains("hiddenSkill");
 	});
 	Reflect.set(_status, "characterlist", characterList.slice(0));
 	Reflect.set(_status, "yeidentity", []);
 
 	const list2 = [];
-	let num;
-	if (lib.configOL.number * 6 > characterList.length) {
-		num = 5;
-	} else if (lib.configOL.number * 7 > characterList.length) {
-		num = 6;
-	} else {
-		num = 7;
-	}
+	// let num;
+	// if (lib.configOL.number * 6 > characterList.length) {
+	// 	num = 5;
+	// } else if (lib.configOL.number * 7 > characterList.length) {
+	// 	num = 6;
+	// } else {
+	// 	num = 7;
+	// }
+	const num = 16;
 
-	characterList.randomSort();
+	// characterList.randomSort();
+	const groupList = ["wei", "shu", "wu", "qun"];
+	function myRandomRemove(arr) {
+		const group = groupList.randomGet();
+		let i = 0;
+		while (i++ < 100) {
+			const idx = Math.floor(Math.random() * arr.length);
+			const name = arr[idx];
+			const grp = lib.character[name][1];
+			if (!groupList.contains(grp) || grp == group) {
+				arr.splice(idx, 1);
+				return name;
+			}
+		}
+		return arr.randomRemove();
+	}
+	function myRandomSort(arr) {
+		const list = [];
+		while (arr.length) {
+			list.push(myRandomRemove(arr));
+		}
+		for (let i = 0; i < list.length; i++) {
+			arr.push(list[i]);
+		}
+		return arr;
+	}
+	myRandomSort(characterList);
 	for (const player of game.players) {
 		list2.push([player, ["选择角色", [game.getCharacterChoice(characterList, num), "character"]], 2, true, () => Math.random(), filterButton]);
 	}
@@ -665,7 +701,10 @@ export const chooseCharacterOLContent = async (event, _trigger, _player) => {
 				// @ts-expect-error 祖宗之法就是这么写的
 				lib.playerOL[i].trueIdentity = lib.character[name2][1];
 				// @ts-expect-error 祖宗之法就是这么写的
-			} else if (get.is.double(name1, true).removeArray(get.is.double(name2, true)).length == 0 || get.is.double(name2, true).removeArray(get.is.double(name1, true)).length == 0) {
+			} else if (
+				get.is.double(name1, true).removeArray(get.is.double(name2, true)).length == 0 ||
+				get.is.double(name2, true).removeArray(get.is.double(name1, true)).length == 0
+			) {
 				chosen.push(lib.playerOL[i]);
 				chosenCharacter.push([name1, name2]);
 			} else {
@@ -806,7 +845,10 @@ export const chooseCharacterOLContent = async (event, _trigger, _player) => {
 				}
 				if (!button.perfectPairs?.length) {
 					const perfectPairStr = perfectPairs.map(i => `[${get.translation(i.link)}]`).join("<br>");
-					const perfectPairNode = ui.create.caption(`<div class="text" data-nature=shenmm style="font-family: yuanli; font-size: 12px">${perfectPairStr}</div>`, button);
+					const perfectPairNode = ui.create.caption(
+						`<div class="text" data-nature=shenmm style="font-family: yuanli; font-size: 12px">${perfectPairStr}</div>`,
+						button
+					);
 					perfectPairNode.style.left = "1px";
 					perfectPairNode.style.bottom = "1px";
 					button.perfectPairs = perfectPairs;
@@ -1031,7 +1073,14 @@ export const showYexingsContent = async (event, _trigger, player) => {
 
 		/** @type {Player[]} */
 		// @ts-expect-error 祖宗之法就是这么做的
-		const maybeFriends = game.players.filter(current => current.identity != "ye" && current !== target && !get.is.jun(current) && !yexingPlayers.includes(current) && !current.getStorage("yexinjia_friend").length);
+		const maybeFriends = game.players.filter(
+			current =>
+				current.identity != "ye" &&
+				current !== target &&
+				!get.is.jun(current) &&
+				!yexingPlayers.includes(current) &&
+				!current.getStorage("yexinjia_friend").length
+		);
 		if (maybeFriends.length === 0) {
 			continue;
 		}
@@ -1274,7 +1323,13 @@ export const chooseJunlingControl = async (event, _trigger, player) => {
 	const choiceList = Reflect.get(event, "choiceList");
 	if (choiceList) {
 		for (let i = 0; i < choiceList.length; i++) {
-			dialog.add('<div class="popup text" style="width:calc(100% - 10px);display:inline-block">选项' + get.cnNumber(i + 1, true) + "：" + choiceList[i] + "</div>");
+			dialog.add(
+				'<div class="popup text" style="width:calc(100% - 10px);display:inline-block">选项' +
+					get.cnNumber(i + 1, true) +
+					"：" +
+					choiceList[i] +
+					"</div>"
+			);
 			controls.push("选项" + get.cnNumber(i + 1, true));
 		}
 	} else if (Reflect.has(event, "controls")) {
@@ -1322,7 +1377,9 @@ export const carryOutJunling = async (event, _trigger, player) => {
 			}
 
 			for (let i = 0; i < 2 && player.countCards("he") > 0; i++) {
-				const result = await player.chooseCard("交给" + get.translation(source) + "第" + get.cnNumber(i + 1) + "张牌（共两张）", "he", true).forResult();
+				const result = await player
+					.chooseCard("交给" + get.translation(source) + "第" + get.cnNumber(i + 1) + "张牌（共两张）", "he", true)
+					.forResult();
 				if (result.cards?.length) {
 					await player.give(result.cards, source);
 				}
