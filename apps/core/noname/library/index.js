@@ -32,7 +32,7 @@ export class Library {
 	updateURLS = updateURLs;
 	updateURL = updateURLs.github;
 	mirrorURL = updateURLs.coding;
-	hallURL = "";
+	hallURL = "wss://noname.inogai.com";
 	assetURL = assetURL;
 	userAgent = userAgentLowerCase;
 	characterDefaultPicturePath = characterDefaultPicturePath;
